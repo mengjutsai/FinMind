@@ -203,7 +203,8 @@ class BackTest:
         fee: float = 0.001425,
         strategy: Strategy = None,
         data_loader: DataLoader = None,
-        token: str = "",
+        token: str = ""
+        # outputname: str = "test.png",
     ):
         self.data_loader = data_loader if data_loader else DataLoader(token)
         self.stock_id = stock_id
@@ -236,7 +237,8 @@ class BackTest:
 
         self._compare_market_detail = pd.DataFrame()
         self._compare_market_stats = pd.Series()
-
+        # self.outputname = outputname
+        
     def add_strategy(self, strategy: Strategy):
         self.strategy = strategy
 
@@ -731,10 +733,11 @@ class BackTest:
 
     def plot(
         self,
+        output: str = "default.png",
         title: str = "Backtest Result",
         x_label: str = "Time",
         y_label: str = "Profit",
-        grid: bool = True,
+        grid: bool = True        
     ):
         try:
             import matplotlib.gridspec as gridspec
@@ -788,4 +791,5 @@ class BackTest:
             ax.set_xlabel(x_label)
         if y_label is not None:
             ax.set_ylabel(y_label)
-        plt.show()
+        # plt.show()
+        plt.savefig(output)
