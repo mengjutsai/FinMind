@@ -54,6 +54,12 @@ class Dataset(str, Enum):
     TaiwanVariousIndicators5Seconds = "TaiwanVariousIndicators5Seconds"
     TaiwanFuturesInstitutionalInvestors = "TaiwanFuturesInstitutionalInvestors"
     TaiwanOptionInstitutionalInvestors = "TaiwanOptionInstitutionalInvestors"
+    TaiwanFuturesInstitutionalInvestorsAfterHours = (
+        "TaiwanFuturesInstitutionalInvestorsAfterHours"
+    )
+    TaiwanOptionInstitutionalInvestorsAfterHours = (
+        "TaiwanOptionInstitutionalInvestorsAfterHours"
+    )
     TaiwanFuturesDealerTradingVolumeDaily = (
         "TaiwanFuturesDealerTradingVolumeDaily"
     )
@@ -97,6 +103,25 @@ class Dataset(str, Enum):
         "TaiwanStockTradingDailyReportSecIdAgg"
     )
     TaiwanStockTradingDailyReport = "TaiwanStockTradingDailyReport"
+    TaiwanStockWarrantTradingDailyReport = (
+        "TaiwanStockWarrantTradingDailyReport"
+    )
+    TaiwanOptionOpenInterestLargeTraders = (
+        "TaiwanOptionOpenInterestLargeTraders"
+    )
+    TaiwanFuturesOpenInterestLargeTraders = (
+        "TaiwanFuturesOpenInterestLargeTraders"
+    )
+    TaiwanStockMarketValueWeight = "TaiwanStockMarketValueWeight"
+    TaiwanBusinessIndicator = "TaiwanBusinessIndicator"
+    TaiwanStockDispositionSecuritiesPeriod = (
+        "TaiwanStockDispositionSecuritiesPeriod"
+    )
+    TaiwanStockIndustryChain = "TaiwanStockIndustryChain"
+    TaiwanStockTradingDate = "TaiwanStockTradingDate"
+    TaiwanStockInfoWithWarrantSummary = "TaiwanStockInfoWithWarrantSummary"
+    TaiwanStockSplitPrice = "TaiwanStockSplitPrice"
+    TaiwanStockParValueChange = "TaiwanStockParValueChange"
 
 
 class Version(str, Enum):

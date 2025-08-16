@@ -132,7 +132,12 @@ class DataLoader(FinMindApi):
         return stock_price
 
     def taiwan_stock_tick(
-        self, stock_id: str, date: str, timeout: int = None
+        self,
+        stock_id: str = None,
+        date: str = "",
+        stock_id_list: typing.List[str] = None,
+        timeout: int = None,
+        use_async: bool = False,
     ) -> pd.DataFrame:
         """get 台灣股價歷史逐筆資料表 TaiwanStockPriceTick
         :param stock_id (str): 股票代號("2330")
@@ -149,8 +154,10 @@ class DataLoader(FinMindApi):
         stock_tick = self.get_data(
             dataset=Dataset.TaiwanStockPriceTick,
             data_id=stock_id,
+            data_id_list=stock_id_list,
             start_date=date,
             timeout=timeout,
+            use_async=use_async,
         )
         return stock_tick
 
@@ -772,6 +779,37 @@ class DataLoader(FinMindApi):
         )
         return stock_month_revenue
 
+    def taiwan_stock_market_value_weight(
+        self,
+        stock_id: str = "",
+        start_date: str = "",
+        end_date: str = "",
+        timeout: int = None,
+    ) -> pd.DataFrame:
+        """get 台股市值比重表
+        :param stock_id (str): 股票代號("2330")
+        :param start_date (str): 起始日期: "2018-02-01"
+        :param end_date (str): 結束日期 "2021-03-01"
+        :param timeout (int): timeout seconds, default None
+
+        :return: 市值比重表 TaiwanStockMarketValueWeight
+        :rtype pd.DataFrame
+        :rtype column rank (int)
+        :rtype column stock_id (str)
+        :rtype column stock_name (str)
+        :rtype column weight_per (float)
+        :rtype column date (str)
+        :rtype column type (str)
+        """
+        stock_market_value_weight = self.get_data(
+            dataset=Dataset.TaiwanStockMarketValueWeight,
+            data_id=stock_id,
+            start_date=start_date,
+            end_date=end_date,
+            timeout=timeout,
+        )
+        return stock_market_value_weight
+
     def taiwan_futopt_tick_info(self, timeout: int = None) -> pd.DataFrame:
         """get 期貨, 選擇權即時報價總覽
         :param timeout (int): timeout seconds, default None
@@ -902,6 +940,98 @@ class DataLoader(FinMindApi):
         )
         return option_daily
 
+    def taiwan_futures_open_interest_large_traders(
+        self,
+        futures_id: str = "",
+        start_date: str = "",
+        end_date: str = "",
+        timeout: int = None,
+    ) -> pd.DataFrame:
+        """get 期貨大額交易人未沖銷部位
+        :param futures_id: 期貨代號("TJF")
+        :param start_date (str): 起始日期("2018-01-01")
+        :param end_date (str): 結束日期("2021-03-06")
+        :param timeout (int): timeout seconds, default None
+
+        :return: 期貨大額交易人未沖銷部位 TaiwanFuturesOpenInterestLargeTraders
+        :rtype pd.DataFrame
+        :rtype column name (str)
+        :rtype column contract_type (str)
+        :rtype column buy_top5_trader_open_interest (float)
+        :rtype column buy_top5_trader_open_interest_per (float)
+        :rtype column buy_top10_trader_open_interest (float)
+        :rtype column buy_top10_trader_open_interest_per (float)
+        :rtype column sell_top5_trader_open_interest (float)
+        :rtype column sell_top5_trader_open_interest_per (float)
+        :rtype column sell_top10_trader_open_interest (float)
+        :rtype column sell_top10_trader_open_interest_per (float)
+        :rtype column market_open_interest (int)
+        :rtype column buy_top5_specific_open_interest (float)
+        :rtype column buy_top5_specific_open_interest_per (float)
+        :rtype column buy_top10_specific_open_interest (float)
+        :rtype column buy_top10_specific_open_interest_per (float)
+        :rtype column sell_top5_specific_open_interest (float)
+        :rtype column sell_top5_specific_open_interest_per (float)
+        :rtype column sell_top10_specific_open_interest (float)
+        :rtype column sell_top10_specific_open_interest_per (float)
+        :rtype column date (str)
+        :rtype column futures_id (str)
+        """
+        futures_open_interest_large_traders = self.get_data(
+            dataset=Dataset.TaiwanFuturesOpenInterestLargeTraders,
+            data_id=futures_id,
+            start_date=start_date,
+            end_date=end_date,
+            timeout=timeout,
+        )
+        return futures_open_interest_large_traders
+
+    def taiwan_option_open_interest_large_traders(
+        self,
+        option_id: str = "",
+        start_date: str = "",
+        end_date: str = "",
+        timeout: int = None,
+    ) -> pd.DataFrame:
+        """get 選擇權大額交易人未沖銷部位
+        :param option_id: 期貨代號("CA")
+        :param start_date (str): 起始日期("2018-01-01")
+        :param end_date (str): 結束日期("2021-03-06")
+        :param timeout (int): timeout seconds, default None
+
+        :return: 選擇權大額交易人未沖銷部位 TaiwanOptionOpenInterestLargeTraders
+        :rtype column contract_type (str)
+        :rtype column buy_top5_trader_open_interest (float)
+        :rtype column buy_top5_trader_open_interest_per (float)
+        :rtype column buy_top10_trader_open_interest (float)
+        :rtype column buy_top10_trader_open_interest_per (float)
+        :rtype column sell_top5_trader_open_interest (float)
+        :rtype column sell_top5_trader_open_interest_per (float)
+        :rtype column sell_top10_trader_open_interest (float)
+        :rtype column sell_top10_trader_open_interest_per (float)
+        :rtype column market_open_interest (int)
+        :rtype column buy_top5_specific_open_interest (float)
+        :rtype column buy_top5_specific_open_interest_per (float)
+        :rtype column buy_top10_specific_open_interest (float)
+        :rtype column buy_top10_specific_open_interest_per (float)
+        :rtype column sell_top5_specific_open_interest (float)
+        :rtype column sell_top5_specific_open_interest_per (float)
+        :rtype column sell_top10_specific_open_interest (float)
+        :rtype column sell_top10_specific_open_interest_per (float)
+        :rtype column date (str)
+        :rtype column put_call (str)
+        :rtype column name (str)
+        :rtype column option_id (str)
+        """
+        option_open_interest_large_traders = self.get_data(
+            dataset=Dataset.TaiwanOptionOpenInterestLargeTraders,
+            data_id=option_id,
+            start_date=start_date,
+            end_date=end_date,
+            timeout=timeout,
+        )
+        return option_open_interest_large_traders
+
     def taiwan_futures_tick(
         self, futures_id: str, date: str, timeout: int = None
     ) -> pd.DataFrame:
@@ -1023,6 +1153,70 @@ class DataLoader(FinMindApi):
             timeout=timeout,
         )
         return option_institutional_investors
+
+    def taiwan_futures_institutional_investors_after_hours(
+        self,
+        data_id: str = "",
+        start_date: str = "",
+        end_date: str = "",
+        timeout: int = None,
+    ) -> pd.DataFrame:
+        """get 期貨夜盤三大法人買賣
+        :param data_id: 期貨代號("TX")
+        :param start_date (str): 起始日期("2021-10-12")
+        :param end_date (str): 結束日期("2023-11-12")
+        :param timeout (int): timeout seconds, default None
+
+        :return: 期貨夜盤三大法人買賣 TaiwanFuturesInstitutionalInvestorsAfterHours
+        :rtype pd.DataFrame
+        :rtype column name (str)
+        :rtype column date (str)
+        :rtype column institutional_investors (str)
+        :rtype column long_deal_volume (int)
+        :rtype column long_deal_amount (int)
+        :rtype column short_deal_volume (int)
+        :rtype column short_deal_amount (int)
+        """
+        futures_institutional_investors_after_hours = self.get_data(
+            dataset=Dataset.TaiwanFuturesInstitutionalInvestorsAfterHours,
+            data_id=data_id,
+            start_date=start_date,
+            end_date=end_date,
+            timeout=timeout,
+        )
+        return futures_institutional_investors_after_hours
+
+    def taiwan_option_institutional_investors_after_hours(
+        self,
+        data_id: str = "",
+        start_date: str = "",
+        end_date: str = "",
+        timeout: int = None,
+    ) -> pd.DataFrame:
+        """get 選擇權夜盤三大法人買賣
+        :param data_id: 選擇權代號("TXO")
+        :param start_date (str): 起始日期("2021-10-12")
+        :param end_date (str): 結束日期("2023-11-12")
+        :param timeout (int): timeout seconds, default None
+
+        :return: 選擇權夜盤三大法人買賣 TaiwanOptionInstitutionalInvestorsAfterHours
+        :rtype pd.DataFrame
+        :rtype column name (str)
+        :rtype column date (str)
+        :rtype column institutional_investors (str)
+        :rtype column long_deal_volume (int)
+        :rtype column long_deal_amount (int)
+        :rtype column short_deal_volume (int)
+        :rtype column short_deal_amount (int)
+        """
+        option_institutional_investors_after_hours = self.get_data(
+            dataset=Dataset.TaiwanOptionInstitutionalInvestorsAfterHours,
+            data_id=data_id,
+            start_date=start_date,
+            end_date=end_date,
+            timeout=timeout,
+        )
+        return option_institutional_investors_after_hours
 
     def taiwan_futures_dealer_trading_volume_daily(
         self,
@@ -1306,13 +1500,14 @@ class DataLoader(FinMindApi):
         )
         return tw_stock_monthly
 
+    # deprecated
     def taiwan_stock_bar(
         self,
         stock_id: str = "",
         date: str = "",
         timeout: int = None,
     ) -> pd.DataFrame:
-        """get 台股分 K 資料表
+        """get 台股分 K 資料表 (deprecated)
         :param timeout (int): timeout seconds, default None
 
         :return: 台股分 K 資料表 TaiwanStockKBar
@@ -1331,6 +1526,38 @@ class DataLoader(FinMindApi):
             data_id=stock_id,
             start_date=date,
             timeout=timeout,
+        )
+        return taiwan_stock_bar
+
+    def taiwan_stock_kbar(
+        self,
+        stock_id: str = "",
+        stock_id_list: typing.List[str] = None,
+        date: str = "",
+        timeout: int = None,
+        use_async: bool = False,
+    ) -> pd.DataFrame:
+        """get 台股分 K 資料表
+        :param timeout (int): timeout seconds, default None
+
+        :return: 台股分 K 資料表 TaiwanStockKBar
+        :rtype pd.DataFrame
+        :rtype column date (str)
+        :rtype column minute (str)
+        :rtype column stock_id (str)
+        :rtype column open (float)
+        :rtype column high (float)
+        :rtype column low (float)
+        :rtype column close (float)
+        :rtype column volume (int)
+        """
+        taiwan_stock_bar = self.get_data(
+            dataset=Dataset.TaiwanStockKBar,
+            data_id=stock_id,
+            data_id_list=stock_id_list,
+            start_date=date,
+            timeout=timeout,
+            use_async=use_async,
         )
         return taiwan_stock_bar
 
@@ -1438,11 +1665,11 @@ class DataLoader(FinMindApi):
 
     def taiwan_stock_tick_snapshot(
         self,
-        stock_id: str = "",
+        stock_id: typing.Union[str, typing.List[str]] = "",
         timeout: int = None,
     ) -> pd.DataFrame:
         """get 台股即時資訊 taiwan_stock_tick_snapshot (只限 sponsor 會員使用)
-        :param stock_id (str): 股票代號("2330")
+        :param stock_id (Union(str, List[str])): 股票代號("2330")
         :param timeout (int): timeout seconds, default None
 
         :return: 台股即時資訊 taiwan_stock_tick_snapshot
@@ -1735,8 +1962,11 @@ class DataLoader(FinMindApi):
         self,
         stock_id: str = "",
         securities_trader_id: str = "",
+        stock_id_list: typing.List[str] = None,
+        # securities_trader_id_list: typing.List[str] = None,
         date: str = "",
         timeout: int = None,
+        use_async: bool = False,
     ) -> pd.DataFrame:
         """get 當日卷商分點表
         :param stock_id (str): 股票代號("2330")
@@ -1758,9 +1988,51 @@ class DataLoader(FinMindApi):
             dataset=Dataset.TaiwanStockTradingDailyReport,
             data_id=stock_id,
             securities_trader_id=securities_trader_id,
+            data_id_list=stock_id_list,
+            # securities_trader_id_list=securities_trader_id_list,
             start_date=date,
             end_date=date,
             timeout=timeout,
+            use_async=use_async,
+        )
+        return stock_trading_daily_report
+
+    def taiwan_stock_warrant_trading_daily_report(
+        self,
+        stock_id: str = "",
+        securities_trader_id: str = "",
+        stock_id_list: typing.List[str] = None,
+        # securities_trader_id_list: typing.List[str] = None,
+        date: str = "",
+        timeout: int = None,
+        use_async: bool = False,
+    ) -> pd.DataFrame:
+        """get 當日權證卷商分點表
+        :param stock_id (str): 股票代號("2330")
+        :param securities_trader_id (str): 卷商代號("1020")
+        :param date (str): 日期("2018-01-01")
+        :param timeout (int): timeout seconds, default None
+
+        :return: 當日權證卷商分點表 TaiwanStockWarrantTradingDailyReport
+        :rtype pd.DataFrame
+        :rtype column securities_trader (str)
+        :rtype column price (float)
+        :rtype column buy (int)
+        :rtype column sell (int)
+        :rtype column securities_trader_id (str)
+        :rtype column stock_id (str)
+        :rtype column date (str)
+        """
+        stock_trading_daily_report = self.get_data(
+            dataset=Dataset.TaiwanStockWarrantTradingDailyReport,
+            data_id=stock_id,
+            securities_trader_id=securities_trader_id,
+            data_id_list=stock_id_list,
+            # securities_trader_id_list=securities_trader_id_list,
+            start_date=date,
+            end_date=date,
+            timeout=timeout,
+            use_async=use_async,
         )
         return stock_trading_daily_report
 
@@ -1799,6 +2071,263 @@ class DataLoader(FinMindApi):
             timeout=timeout,
         )
         return stock_trading_daily_report_secid_agg
+
+    def taiwan_business_indicator(
+        self,
+        start_date: str = "",
+        end_date: str = "",
+        timeout: int = None,
+    ) -> pd.DataFrame:
+        """get 台灣每月景氣對策信號表
+        :param start_date (str): 日期("2018-01-01")
+        :param end_date (str): 日期("2018-01-02")
+        :param timeout (int): timeout seconds, default None
+
+        :return: 台灣每月景氣對策信號表 TaiwanBusinessIndicator
+        :rtype pd.DataFrame
+        :rtype column date (str)
+        :rtype column leading (float)
+        :rtype column leading_notrend (float)
+        :rtype column coincident (float)
+        :rtype column coincident_notrend (float)
+        :rtype column lagging (float)
+        :rtype column lagging_notrend (float)
+        :rtype column monitoring (float)
+        :rtype column monitoring_color (str)
+        """
+        taiwan_business_indicator = self.get_data(
+            dataset=Dataset.TaiwanBusinessIndicator,
+            start_date=start_date,
+            end_date=end_date,
+            timeout=timeout,
+        )
+        return taiwan_business_indicator
+
+    def taiwan_stock_disposition_securities_period(
+        self,
+        stock_id: str = "",
+        start_date: str = "",
+        end_date: str = "",
+        timeout: int = None,
+    ) -> pd.DataFrame:
+        """get 公布處置有價證券表
+        :param stock_id (str): 股票代號("2330")
+        :param start_date (str): 日期("2018-01-01")
+        :param end_date (str): 日期("2018-01-02")
+        :param timeout (int): timeout seconds, default None
+
+        :return: 公布處置有價證券表 TaiwanStockDispositionSecuritiesPeriod
+        :rtype pd.DataFrame
+        :rtype column date (str)
+        :rtype column stock_id (str)
+        :rtype column stock_name (str)
+        :rtype column disposition_cnt (int)
+        :rtype column condition (str)
+        :rtype column measure (str)
+        :rtype column period_start (str)
+        :rtype column period_end (str)
+        """
+        stock_disposition_securities_period = self.get_data(
+            dataset=Dataset.TaiwanStockDispositionSecuritiesPeriod,
+            data_id=stock_id,
+            start_date=start_date,
+            end_date=end_date,
+            timeout=timeout,
+        )
+        return stock_disposition_securities_period
+
+    def taiwan_stock_industry_chain(
+        self,
+        stock_id: str = "",
+        timeout: int = None,
+    ) -> pd.DataFrame:
+        """get 個體公司所屬產業鏈
+        :param stock_id (str): 股票代號("2330")
+        :param timeout (int): timeout seconds, default None
+
+        :return: 個體公司所屬產業鏈 TaiwanStockIndustryChain
+        :rtype pd.DataFrame
+        :rtype column stock_id (str)
+        :rtype column industry (str)
+        :rtype column sub_industry (str)
+        """
+        stock_industry_chain = self.get_data(
+            dataset=Dataset.TaiwanStockIndustryChain,
+            stock_id=stock_id,
+            timeout=timeout,
+        )
+        return stock_industry_chain
+
+    def cnn_fear_greed_index(
+        self,
+        start_date: str = "",
+        end_date: str = "",
+        timeout: int = None,
+    ) -> pd.DataFrame:
+        """get 恐懼與貪婪指數
+        :param start_date (str): 日期("2018-01-01")
+        :param end_date (str): 日期("2018-01-02")
+        :param timeout (int): timeout seconds, default None
+
+        :return: 恐懼與貪婪指數 CnnFearGreedIndex
+        :rtype pd.DataFrame
+        :rtype column date (str)
+        :rtype column fear_greed (str)
+        :rtype column fear_greed_emotion (str)
+        """
+        cnn_fear_greed_index = self.get_data(
+            dataset=Dataset.CnnFearGreedIndex,
+            timeout=timeout,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        return cnn_fear_greed_index
+
+    def taiwan_stock_every5seconds_index(
+        self,
+        data_id: str = "",
+        date: str = "",
+        timeout: int = None,
+    ) -> pd.DataFrame:
+        """get 每5秒指數統計
+        :param data_id (str): 產業代號("Automobile")
+        :param date (str): 日期("2018-01-01")
+        :param timeout (int): timeout seconds, default None
+
+        :return: 每5秒指數統計 TaiwanStockEvery5SecondsIndex
+        :rtype pd.DataFrame
+        :rtype column date (str)
+        :rtype column time (str)
+        :rtype column stock_id (str)
+        :rtype column price (float)
+        """
+        taiwan_stock_every5seconds_index = self.get_data(
+            dataset=Dataset.TaiwanStockEvery5SecondsIndex,
+            data_id=data_id,
+            timeout=timeout,
+            start_date=date,
+        )
+        return taiwan_stock_every5seconds_index
+
+    def taiwan_stock_trading_date(
+        self,
+        start_date: str = "",
+        end_date: str = "",
+        timeout: int = None,
+    ) -> pd.DataFrame:
+        """get 台灣交易日日期
+        :param start_date (str): 日期("2025-01-01")
+        :param end_date (str): 日期("2025-02-01")
+        :param timeout (int): timeout seconds, default None
+
+        :return: 台灣交易日日期 TaiwanStockTradingDate
+        :rtype pd.DataFrame
+        :rtype column date (str)
+        """
+        taiwan_stock_trading_date = self.get_data(
+            dataset=Dataset.TaiwanStockTradingDate,
+            timeout=timeout,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        return taiwan_stock_trading_date
+
+    def taiwan_stock_info_with_warrant_summary(
+        self,
+        start_date: str = "",
+        end_date: str = "",
+        data_id: str = "",
+        timeout: int = None,
+    ) -> pd.DataFrame:
+        """get 台股分割後參考價
+        :param start_date (str): 日期("2025-01-01")
+        :param end_date (str): 日期("2026-02-01")
+        :param data_id (str): 權證代號("2330")
+        :param timeout (int): timeout seconds, default None
+
+        :return: 台股分割後參考價 TaiwanStockInfoWithWarrantSummary
+        :rtype pd.DataFrame
+        :rtype column stock_id (str)
+        :rtype column date (str)
+        :rtype column close (float)
+        :rtype column target_stock_id (str)
+        :rtype column target_close (float)
+        :rtype column type (str)
+        :rtype column fulfillment_method (str)
+        :rtype column end_date (str)
+        :rtype column fulfillment_start_date (str)
+        :rtype column fulfillment_end_date (str)
+        :rtype column exercise_ratio (float)
+        :rtype column fulfillment_price (float)
+        """
+        taiwan_stock_info_with_warrant_summary = self.get_data(
+            dataset=Dataset.TaiwanStockInfoWithWarrantSummary,
+            data_id=data_id,
+            timeout=timeout,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        return taiwan_stock_info_with_warrant_summary
+
+    def taiwan_stock_split_price(
+        self,
+        start_date: str = "",
+        end_date: str = "",
+        timeout: int = None,
+    ) -> pd.DataFrame:
+        """get 台股分割後參考價
+        :param start_date (str): 日期("2025-01-01")
+        :param end_date (str): 日期("2026-02-01")
+        :param timeout (int): timeout seconds, default None
+
+        :return: 台股分割後參考價 TaiwanStockSplitPrice
+        :rtype pd.DataFrame
+        :rtype column date (str)
+        :rtype column stock_id (str)
+        :rtype column type (str)
+        :rtype column before_price (float)
+        :rtype column after_price (float)
+        :rtype column max_price (float)
+        :rtype column min_price (float)
+        :rtype column open_price (float)
+        """
+        taiwan_stock_split_price = self.get_data(
+            dataset=Dataset.TaiwanStockSplitPrice,
+            timeout=timeout,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        return taiwan_stock_split_price
+
+    def taiwan_stock_par_value_change(
+        self,
+        start_date: str = "",
+        end_date: str = "",
+        timeout: int = None,
+    ) -> pd.DataFrame:
+        """get 台灣股票變更面額恢復買賣參考價格
+        :param start_date (str): 日期("2025-01-01")
+        :param end_date (str): 日期("2025-02-01")
+        :param timeout (int): timeout seconds, default None
+
+        :return: 台灣股票變更面額恢復買賣參考價格 TaiwanStockParValueChange
+        :rtype pd.DataFrame
+        :rtype column date (str)
+        :rtype column stock_id (str)
+        :rtype column stock_name (str)
+        :rtype column before_close (float)
+        :rtype column after_ref_close (float)
+        :rtype column after_ref_max (float)
+        :rtype column after_ref_min (float)
+        :rtype column after_ref_open (float)
+        """
+        taiwan_stock_par_value_change = self.get_data(
+            dataset=Dataset.TaiwanStockParValueChange,
+            timeout=timeout,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        return taiwan_stock_par_value_change
 
 
 class Feature:
