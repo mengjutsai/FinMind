@@ -3,7 +3,7 @@ import pandas as pd
 
 from FinMind.data import DataLoader
 from FinMind.schema.data import Dataset
-from FinMind.strategies.base import Strategy, Trader
+from FinMind.strategies.base_sql import Strategy, Trader
 
 
 class ShortSaleMarginPurchaseRatio(Strategy):
@@ -42,6 +42,7 @@ class ShortSaleMarginPurchaseRatio(Strategy):
             start_date=self.start_date,
             end_date=self.end_date,
         )
+        print(self.InstitutionalInvestorsBuySell[["sell", "buy"]])
 
     def load_taiwan_stock_margin_purchase_short_sale(self):
         self.TaiwanStockMarginPurchaseShortSale[
@@ -75,6 +76,8 @@ class ShortSaleMarginPurchaseRatio(Strategy):
             self.InstitutionalInvestorsBuySell["buy"]
             - self.InstitutionalInvestorsBuySell["sell"]
         )
+        print("ioefjowiejfoi")
+        print(self.InstitutionalInvestorsBuySell["buy"])
 
     def create_trade_sign(
         self, stock_price: pd.DataFrame, **kwargs
@@ -82,12 +85,14 @@ class ShortSaleMarginPurchaseRatio(Strategy):
         stock_price = stock_price.sort_values("date")
         self.load_taiwan_stock_margin_purchase_short_sale()
         self.load_institutional_investors_buy_sell()
+
         stock_price = pd.merge(
             stock_price,
             self.InstitutionalInvestorsBuySell[["stock_id", "date", "diff"]],
             on=["stock_id", "date"],
             how="left",
         ).fillna(0)
+
         stock_price = pd.merge(
             stock_price,
             self.TaiwanStockMarginPurchaseShortSale[
@@ -103,6 +108,7 @@ class ShortSaleMarginPurchaseRatio(Strategy):
             >= self.ShortSaleMarginPurchaseTodayRatioThreshold
         ) & (stock_price["diff"] > 0)
         stock_price.loc[sell_mask, "signal"] = -1
+
         buy_mask = (
             stock_price["ShortSaleMarginPurchaseTodayRatio"]
             < self.ShortSaleMarginPurchaseTodayRatioThreshold

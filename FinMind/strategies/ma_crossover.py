@@ -1,7 +1,7 @@
 import pandas as pd
 
 from FinMind.indicators import add_ma_golden_death_cross_orver_indicators
-from FinMind.strategies.base import Strategy
+from FinMind.strategies.base_sql import Strategy
 
 
 class MaCrossOver(Strategy):

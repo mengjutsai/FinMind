@@ -9,6 +9,8 @@ from loguru import logger
 
 from FinMind import indicators
 from FinMind.data import DataLoader
+from FinMind.data import sql_data_loader
+
 from FinMind.schema import (
     CompareMarketDetail,
     CompareMarketStats,
@@ -163,7 +165,8 @@ class Strategy:
         stock_id: str,
         start_date: str,
         end_date: str,
-        data_loader: DataLoader,
+        # data_loader: DataLoader,
+        data_loader: sql_data_loader,
     ):
         self.trader = trader
         self.stock_id = stock_id
@@ -202,11 +205,15 @@ class BackTest:
         trader_fund: float = 0,
         fee: float = 0.001425,
         strategy: Strategy = None,
-        data_loader: DataLoader = None,
+        # data_loader: DataLoader = None,
+        data_loader: sql_data_loader = None,
         token: str = ""
         # outputname: str = "test.png",
     ):
-        self.data_loader = data_loader if data_loader else DataLoader(token)
+        # self.data_loader = data_loader if data_loader else DataLoader(token)
+        self.data_loader = data_loader 
+
+        
         self.stock_id = stock_id
         self.start_date = start_date
         self.end_date = end_date
@@ -532,6 +539,7 @@ class BackTest:
             self.stock_price = strategy.create_trade_sign(
                 stock_price=self.stock_price, additional_dataset_obj=self
             )
+
             assert (
                 "signal" in self.stock_price.columns
             ), "Must be create signal columns in stock_price"
@@ -544,6 +552,7 @@ class BackTest:
             )
             self.stock_price = self.stock_price.sort_index()
         _trade_detail_dict_list = []
+
         for i in range(0, len(self.stock_price)):
             # use last date to decide buy or sell or nothing
             last_date_index = i - 1
@@ -565,13 +574,17 @@ class BackTest:
                 )
             )
 
+
         self._trade_detail = pd.DataFrame(_trade_detail_dict_list)
+
         self._trade_detail["date"] = self.stock_price["date"]
         self._trade_detail = self._trade_detail.drop(["fee", "tax"], axis=1)
         self._trade_detail["EverytimeTotalProfit"] = (
             self._trade_detail["trader_fund"]
             + self._trade_detail["EverytimeProfit"]
         )
+
+        
         self.__compute_final_stats()
         self.__compute_compare_market()
 
@@ -656,12 +669,14 @@ class BackTest:
         self._compare_market_detail = self._trade_detail[
             ["date", "EverytimeTotalProfit"]
         ].copy()
+
         self._compare_market_detail["CumDailyReturn"] = (
             np.log(self._compare_market_detail["EverytimeTotalProfit"])
             - np.log(
                 self._compare_market_detail["EverytimeTotalProfit"].shift(1)
             )
         ).fillna(0)
+
         self._compare_market_detail["CumDailyReturn"] = round(
             self._compare_market_detail["CumDailyReturn"].cumsum(), 5
         )
@@ -672,6 +687,7 @@ class BackTest:
             end_date=self.end_date,
         )[["date", "close"]]
 
+        # print(tai_ex)
         tai_ex["CumTaiExDailyReturn"] = (
             np.log(tai_ex["close"]) - np.log(tai_ex["close"].shift(1))
         ).fillna(0)
@@ -684,8 +700,10 @@ class BackTest:
             on=["date"],
             how="left",
         )
+
         self._compare_market_detail = self._compare_market_detail.dropna()
         self._compare_market_stats = pd.Series()
+
         self._compare_market_stats["AnnualTaiexReturnPer"] = (
             period_return2annual_return(
                 self._compare_market_detail["CumTaiExDailyReturn"].values[-1],
@@ -792,5 +810,7 @@ class BackTest:
         if y_label is not None:
             ax.set_ylabel(y_label)
         # plt.show()
+        # print(output)
+
         os.makedirs(os.path.dirname(output), exist_ok=True)
         plt.savefig(output)

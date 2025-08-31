@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from FinMind.schema.data import Dataset
-from FinMind.strategies.base import Strategy
+from FinMind.strategies.base_sql import Strategy
 
 
 class InstitutionalInvestorsFollower(Strategy):

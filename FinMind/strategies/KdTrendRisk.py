@@ -8,7 +8,7 @@ try:
 except Exception:
     HAS_ATR = False
 
-from FinMind.strategies.base import Strategy
+from FinMind.strategies.base_sql import Strategy
 
 
 class KdTrendRisk(Strategy):

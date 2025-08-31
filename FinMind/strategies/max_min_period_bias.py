@@ -1,7 +1,7 @@
 import pandas as pd
 from ta.trend import SMAIndicator
 
-from FinMind.strategies.base import Strategy
+from FinMind.strategies.base_sql import Strategy
 
 
 class MaxMinPeriodBias(Strategy):

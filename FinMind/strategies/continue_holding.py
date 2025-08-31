@@ -1,6 +1,6 @@
 import pandas as pd
 
-from FinMind.strategies.base import Strategy
+from FinMind.strategies.base_sql import Strategy
 from FinMind.indicators import add_continue_holding_indicators
 
 

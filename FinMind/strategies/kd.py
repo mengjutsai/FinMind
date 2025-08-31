@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from ta.momentum import StochasticOscillator
 
-from FinMind.strategies.base import Strategy
+from FinMind.strategies.base_sql import Strategy
 from FinMind.indicators import add_kd_indicators
 
 
