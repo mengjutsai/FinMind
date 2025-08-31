@@ -314,4 +314,8 @@ class TriangleBreakout_V3(Strategy):
         # 🔑 強制轉回字串，避免 merge 出錯
         sp["date"] = sp["date"].dt.strftime("%Y-%m-%d")
 
+        for col in ["CashEarningsDistribution", "StockEarningsDistribution"]:
+            if col not in sp.columns:
+                sp[col] = 0.0
+
         return sp

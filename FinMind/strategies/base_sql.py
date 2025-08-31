@@ -58,6 +58,9 @@ class Trader:
         self.RealizedProfit = 0
         self.EverytimeProfit = 0
 
+        # metsai
+        self.total_invested = 0  # 累積投入金額
+
     def buy(self, trade_price: float, trade_lots: float):
         self.trade_price = trade_price
         if (
@@ -74,6 +77,8 @@ class Trader:
             self.hold_cost = (
                 origin_hold_cost + buy_total_price
             ) / self.hold_volume
+
+            self.total_invested += buy_total_price
 
         self.__compute_realtime_status()
 
@@ -625,7 +630,50 @@ class BackTest:
         trader.trader_fund += gain_cash
         trader.EverytimeProfit = trader.RealizedProfit + trader.UnrealizedProfit
 
+    # def __compute_final_stats(self):
+    #     self._final_stats["MeanProfit"] = np.mean(
+    #         self._trade_detail["EverytimeProfit"]
+    #     )
+    #     self._final_stats["MaxLoss"] = np.min(
+    #         self._trade_detail["EverytimeProfit"]
+    #     )
+    #     self._final_stats["FinalProfit"] = self._trade_detail[
+    #         "EverytimeProfit"
+    #     ].values[-1]
+    #     self._final_stats["MeanProfitPer"] = round(
+    #         self._final_stats["MeanProfit"] / self.trader_fund * 100, 2
+    #     )
+    #     self._final_stats["FinalProfitPer"] = round(
+    #         self._final_stats["FinalProfit"] / self.trader_fund * 100, 2
+    #     )
+    #     self._final_stats["MaxLossPer"] = round(
+    #         self._final_stats["MaxLoss"] / self.trader_fund * 100, 2
+    #     )
+    #     self._final_stats["AnnualReturnPer"] = round(
+    #         period_return2annual_return(
+    #             self._final_stats["FinalProfitPer"] / 100,
+    #             self._trade_period_years,
+    #         )
+    #         * 100,
+    #         2,
+    #     )
+    #     time_step_returns = (
+    #         self._trade_detail["EverytimeProfit"]
+    #         - self._trade_detail["EverytimeProfit"].shift(1)
+    #     ) / (self._trade_detail["EverytimeProfit"].shift(1) + self.trader_fund)
+    #     strategy_return = np.mean(time_step_returns)
+    #     strategy_std = np.std(time_step_returns)
+    #     self._final_stats["AnnualSharpRatio"] = calculate_sharp_ratio(
+    #         strategy_return, strategy_std
+    #     )
+
+
+
+
     def __compute_final_stats(self):
+        # ⚡ 用實際投入金額，而不是初始基金
+        invested_capital = max(1e-9, self.trader.total_invested)
+
         self._final_stats["MeanProfit"] = np.mean(
             self._trade_detail["EverytimeProfit"]
         )
@@ -635,14 +683,16 @@ class BackTest:
         self._final_stats["FinalProfit"] = self._trade_detail[
             "EverytimeProfit"
         ].values[-1]
+
+        # ✅ 改成用投入資金算百分比
         self._final_stats["MeanProfitPer"] = round(
-            self._final_stats["MeanProfit"] / self.trader_fund * 100, 2
+            self._final_stats["MeanProfit"] / invested_capital * 100, 2
         )
         self._final_stats["FinalProfitPer"] = round(
-            self._final_stats["FinalProfit"] / self.trader_fund * 100, 2
+            self._final_stats["FinalProfit"] / invested_capital * 100, 2
         )
         self._final_stats["MaxLossPer"] = round(
-            self._final_stats["MaxLoss"] / self.trader_fund * 100, 2
+            self._final_stats["MaxLoss"] / invested_capital * 100, 2
         )
         self._final_stats["AnnualReturnPer"] = round(
             period_return2annual_return(
@@ -652,15 +702,20 @@ class BackTest:
             * 100,
             2,
         )
+
+        # ⚡ 每期報酬率 = ΔProfit / 投入金額
         time_step_returns = (
             self._trade_detail["EverytimeProfit"]
             - self._trade_detail["EverytimeProfit"].shift(1)
-        ) / (self._trade_detail["EverytimeProfit"].shift(1) + self.trader_fund)
+        ) / invested_capital
+
         strategy_return = np.mean(time_step_returns)
         strategy_std = np.std(time_step_returns)
+
         self._final_stats["AnnualSharpRatio"] = calculate_sharp_ratio(
             strategy_return, strategy_std
         )
+
 
     # TODO:
     # future can compare with diff market, such as America, China
