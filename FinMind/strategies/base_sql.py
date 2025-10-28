@@ -583,11 +583,20 @@ class BackTest:
         self._trade_detail = pd.DataFrame(_trade_detail_dict_list)
 
         self._trade_detail["date"] = self.stock_price["date"]
-        self._trade_detail = self._trade_detail.drop(["fee", "tax"], axis=1)
-        self._trade_detail["EverytimeTotalProfit"] = (
-            self._trade_detail["trader_fund"]
-            + self._trade_detail["EverytimeProfit"]
-        )
+
+        # self._trade_detail = self._trade_detail.drop(["fee", "tax"], axis=1) # metsai - remove this for now
+        self._trade_detail = self._trade_detail.drop(columns=["fee","tax"], errors="ignore")
+
+        # self._trade_detail["EverytimeTotalProfit"] = (
+        #     self._trade_detail["trader_fund"]
+        #     + self._trade_detail["EverytimeProfit"]
+        # )
+
+        if not self._trade_detail.empty:
+            self._trade_detail["EverytimeTotalProfit"] = (
+                self._trade_detail["trader_fund"] + self._trade_detail["EverytimeProfit"]
+            )
+
 
         
         self.__compute_final_stats()
@@ -815,26 +824,32 @@ class BackTest:
         try:
             import matplotlib.gridspec as gridspec
             import matplotlib.pyplot as plt
+            import matplotlib.dates as mdates
         except ImportError:
             raise ImportError("You must install matplotlib to plot importance")
 
         fig = plt.figure(figsize=(12, 8))
         gs = gridspec.GridSpec(4, 1, figure=fig)
         ax = fig.add_subplot(gs[:2, :])
-        xpos = self._trade_detail.index
+
+        # xpos = self._trade_detail.index
+        # print(self._trade_detail)
+        xpos = pd.to_datetime(self._trade_detail["date"])
+
+
         ax.plot(
-            "UnrealizedProfit", data=self._trade_detail, marker="", alpha=0.8
+            xpos, "UnrealizedProfit", data=self._trade_detail, marker="", alpha=0.8
         )
-        ax.plot("RealizedProfit", data=self._trade_detail, marker="", alpha=0.8)
+        ax.plot(xpos, "RealizedProfit", data=self._trade_detail, marker="", alpha=0.8)
         ax.plot(
-            "EverytimeProfit", data=self._trade_detail, marker="", alpha=0.8
+            xpos, "EverytimeProfit", data=self._trade_detail, marker="", alpha=0.8
         )
         ax.grid(grid)
         ax.legend(loc=2)
         axx = ax.twinx()
         axx.bar(
             xpos,
-            self._trade_detail["hold_volume"],
+            self._trade_detail["hold_volume"] / 1000.0, #metsai
             alpha=0.2,
             label="hold_volume",
             color="pink",
@@ -842,6 +857,7 @@ class BackTest:
         axx.legend(loc=3)
         ax2 = fig.add_subplot(gs[2:, :], sharex=ax)
         ax2.plot(
+            xpos,
             "trade_price",
             data=self._trade_detail,
             marker="",
@@ -849,12 +865,19 @@ class BackTest:
             alpha=0.8,
         )
         ax2.plot(
+            xpos,
             "hold_cost",
             data=self._trade_detail,
             marker="",
             label="hold_cost",
             alpha=0.8,
         )
+
+        ax2.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
+        ax2.xaxis.set_major_locator(mdates.DayLocator(interval=30))
+
+        fig.autofmt_xdate(rotation=90)
+
         # TODO: add signal plot
         ax2.legend(loc=2)
         ax2.grid(grid)
