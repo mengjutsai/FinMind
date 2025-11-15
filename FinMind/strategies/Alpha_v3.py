@@ -6,6 +6,10 @@ import numpy as np
 from datetime import datetime
 from FinMind.strategies.base_sql import Strategy
 from concurrent.futures import ProcessPoolExecutor, as_completed
+import re
+from datetime import datetime
+
+
 
 def _plot_worker(task):
     import subprocess
@@ -84,6 +88,27 @@ class Alpha_v3(Strategy):
             f"start={self.pattern_start_date}, end={self.pattern_end_date}")
 
 
+    def _extract_filename_last_date(self, filename: str):
+        """
+        從 File 名稱解析出 to_date
+        e.g. 1303_南亞_2024-07-19_2025-07-14_D-K_raw.png → 2025-07-14
+        """
+        import os
+        base = os.path.basename(filename)
+        parts = base.split("_")
+
+        # 必須至少有 4 個 segment 才能含 from_date、to_date
+        if len(parts) < 4:
+            return None
+
+        date_str = parts[-3]   # 倒數第三段永遠是 to_date
+        try:
+            return datetime.strptime(date_str, "%Y-%m-%d").date()
+        except:
+            return None
+
+
+
     # =============================================================
     # (A) 平行繪圖
     # =============================================================
@@ -95,7 +120,8 @@ class Alpha_v3(Strategy):
         tasks = []
         for d in trade_dates:
             d_str = d.strftime("%Y-%m-%d")
-            start_360 = (d - pd.Timedelta(days=360)).strftime("%Y-%m-%d")
+            # start_360 = (d - pd.Timedelta(days=360)).strftime("%Y-%m-%d")
+            start_360 = "1990-01-01"
 
             out_dir = os.path.join(self.plot_output_dir, "image")
             os.makedirs(out_dir, exist_ok=True)
@@ -170,9 +196,6 @@ class Alpha_v3(Strategy):
 
         # 讀取 seg_results.csv
         df_seg = pd.read_csv(self.seg_csv_path)
-
-        print(self.seg_csv_path)
-        print(df_seg)
 
         df_seg["Breakout_Date"] = pd.to_datetime(df_seg["Breakout_Date"], errors="coerce")
 
@@ -262,9 +285,19 @@ class Alpha_v3(Strategy):
             # =========================================================
             # 2) 當天是否出現突破訊號（來自 seg_results.csv）
             # =========================================================
-            df_today = df_sig[df_sig["Breakout_Date"] == date]
 
+            df_today = []
+            df_sig["file_date"] = df_sig["File"].apply(self._extract_filename_last_date)
+
+
+            df_today = df_sig[
+                (df_sig["Breakout_Date"].dt.date == date.date()) &
+                (df_sig["Breakout_Date"].dt.date == df_sig["file_date"])
+            ]
+
+            # df_today = df_sig[df_sig["Breakout_Date"] == date]
             df_today_long = df_today[df_today["Label"].isin(self.long_labels)]
+
 
             if not df_today_long.empty:
 

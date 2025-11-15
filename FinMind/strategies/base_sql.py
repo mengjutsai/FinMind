@@ -559,11 +559,26 @@ class BackTest:
         _trade_detail_dict_list = []
 
         for i in range(0, len(self.stock_price)):
+
+            row = self.stock_price.loc[i]
+
+            # === 判斷當天價格是否無效 ===
+            invalid_price = (
+                row["open"] == 0 or row["close"] == 0 or
+                row["max"] == 0 or row["min"] == 0 or
+                pd.isna(row["open"]) or pd.isna(row["close"])
+            )
+
             # use last date to decide buy or sell or nothing
             last_date_index = i - 1
             signal = (
                 self.stock_price.loc[last_date_index, "signal"] if i != 0 else 0
             )
+
+            if invalid_price:
+                signal = 0
+                self.stock_price.loc[i, "signal"] = 0
+
             trade_price = self.stock_price.loc[i, "open"]
             # 買賣之前，先進行配息配股
             cash_div = self.stock_price.loc[i, "CashEarningsDistribution"]
@@ -758,6 +773,72 @@ class BackTest:
         return self._compare_market_stats
 
 
+    # # original
+    # def plot(
+    #     self,
+    #     output: str = "default.png",
+    #     title: str = "Backtest Result",
+    #     x_label: str = "Time",
+    #     y_label: str = "Profit",
+    #     grid: bool = True        
+    # ):
+    #     print("plotting backtest result...")
+    #     try:
+    #         import matplotlib.gridspec as gridspec
+    #         import matplotlib.pyplot as plt
+    #     except ImportError:
+    #         raise ImportError("You must install matplotlib to plot importance")
+
+    #     fig = plt.figure(figsize=(12, 8))
+    #     gs = gridspec.GridSpec(4, 1, figure=fig)
+    #     ax = fig.add_subplot(gs[:2, :])
+    #     xpos = self._trade_detail.index
+    #     ax.plot(
+    #         "UnrealizedProfit", data=self._trade_detail, marker="", alpha=0.8
+    #     )
+    #     ax.plot("RealizedProfit", data=self._trade_detail, marker="", alpha=0.8)
+    #     ax.plot(
+    #         "EverytimeProfit", data=self._trade_detail, marker="", alpha=0.8
+    #     )
+    #     ax.grid(grid)
+    #     ax.legend(loc=2)
+    #     axx = ax.twinx()
+    #     axx.bar(
+    #         xpos,
+    #         self._trade_detail["hold_volume"],
+    #         alpha=0.2,
+    #         label="hold_volume",
+    #         color="pink",
+    #     )
+    #     axx.legend(loc=3)
+    #     ax2 = fig.add_subplot(gs[2:, :], sharex=ax)
+    #     ax2.plot(
+    #         "trade_price",
+    #         data=self._trade_detail,
+    #         marker="",
+    #         label="open",
+    #         alpha=0.8,
+    #     )
+    #     ax2.plot(
+    #         "hold_cost",
+    #         data=self._trade_detail,
+    #         marker="",
+    #         label="hold_cost",
+    #         alpha=0.8,
+    #     )
+    #     # TODO: add signal plot
+    #     ax2.legend(loc=2)
+    #     ax2.grid(grid)
+    #     if title is not None:
+    #         ax.set_title(title)
+    #     if x_label is not None:
+    #         ax.set_xlabel(x_label)
+    #     if y_label is not None:
+    #         ax.set_ylabel(y_label)
+    #     # plt.show()
+    #     os.makedirs(os.path.dirname(output), exist_ok=True)
+    #     plt.savefig(output)
+
 
     def plot(
         self,
@@ -767,58 +848,154 @@ class BackTest:
         y_label: str = "Profit",
         grid: bool = True        
     ):
-        try:
-            import matplotlib.gridspec as gridspec
-            import matplotlib.pyplot as plt
-        except ImportError:
-            raise ImportError("You must install matplotlib to plot importance")
+        print("plotting backtest result...")
 
-        fig = plt.figure(figsize=(12, 8))
+        import os
+        import numpy as np
+        import matplotlib.pyplot as plt
+        import matplotlib.gridspec as gridspec
+        import matplotlib.dates as mdates
+
+        # ----------------------------------------------------
+        # 1. 過濾無效日（價格=0 或 NaN）
+        # ----------------------------------------------------
+        df = self._trade_detail.copy()
+
+        df["date"] = pd.to_datetime(df["date"], errors="coerce")
+        df = df[~df["date"].isna()].copy()
+
+        df = df[
+            (df["trade_price"] > 0) &
+            (~df["trade_price"].isna())
+        ].copy()
+
+        if "open" in df.columns:
+            df = df[(df["open"] > 0)].copy()
+
+        df = df.reset_index(drop=True)
+
+        if df.empty:
+            print("⚠️ plot() 沒有有效的交易日資料可畫圖。")
+            return
+
+        dates = df["date"].tolist()
+  
+        # ----------------------------------------------------
+        # 2. True ReturnPct (%): 以「歷史總投入資金」為基準
+        # ----------------------------------------------------
+
+        df["NetInvested"] = 0.0
+        df["ReturnPct"] = 0.0
+
+        total_cum_invested = 0.0
+        prev_volume = 0
+
+        for i in range(len(df)):
+            vol = df.loc[i, "hold_volume"]
+            price = df.loc[i, "trade_price"]
+
+            # 今日持倉 vs 昨天的變化量
+            delta = vol - prev_volume
+
+            if delta > 0:
+                # 買進 → 永遠累積投入
+                buy_cost = delta * price
+                total_cum_invested += buy_cost
+
+            # 賣出不需要扣除投入資金
+            # 因為你要的是“我歷史上總共投進去多少錢”
+
+            prev_volume = vol
+
+            df.loc[i, "NetInvested"] = total_cum_invested
+
+
+        # 最後用 (已實現 + 未實現) / 真實淨投入
+        profit_all = df["UnrealizedProfit"] + df["RealizedProfit"]
+
+        mask = df["NetInvested"] > 0
+        df.loc[mask, "ReturnPct"] = (profit_all[mask] / df["NetInvested"][mask]) * 100.0
+
+
+        # ----------------------------------------------------
+        # 3. 佈局
+        # ----------------------------------------------------
+        fig = plt.figure(figsize=(14, 9))
         gs = gridspec.GridSpec(4, 1, figure=fig)
+
+        # ====================================================
+        # 上半部：損益 + 報酬率 + 持有量
+        # ====================================================
         ax = fig.add_subplot(gs[:2, :])
-        xpos = self._trade_detail.index
-        ax.plot(
-            "UnrealizedProfit", data=self._trade_detail, marker="", alpha=0.8
-        )
-        ax.plot("RealizedProfit", data=self._trade_detail, marker="", alpha=0.8)
-        ax.plot(
-            "EverytimeProfit", data=self._trade_detail, marker="", alpha=0.8
-        )
+
+        ax.plot(dates, df["UnrealizedProfit"], alpha=0.8, label="UnrealizedProfit")
+        ax.plot(dates, df["RealizedProfit"], alpha=0.8, label="RealizedProfit")
+        ax.plot(dates, df["EverytimeProfit"], alpha=0.8, label="EverytimeProfit")
+
         ax.grid(grid)
-        ax.legend(loc=2)
-        axx = ax.twinx()
-        axx.bar(
-            xpos,
-            self._trade_detail["hold_volume"],
+        ax.legend(loc="upper left")
+
+        # ===== 右側內軸：ReturnPct =====
+        ax_ret = ax.twinx()
+        ax_ret.plot(
+            dates, df["ReturnPct"],
+            color="red", alpha=0.7, linewidth=1.5, label="ReturnPct (%)"
+        )
+        ax_ret.set_ylabel("Return (%)")
+        ax_ret.legend(loc="upper right")
+
+        # ===== 右側外軸：持有量 =====
+        ax_vol = ax.twinx()
+        ax_vol.spines["right"].set_position(("axes", 1.08))  # 推出去
+        ax_vol.bar(
+            dates,
+            df["hold_volume"] / 1000,
             alpha=0.2,
-            label="hold_volume",
+            label="hold_volume(K)",
             color="pink",
         )
-        axx.legend(loc=3)
+        ax_vol.set_ylabel("Hold Volume (K)")
+        ax_vol.legend(loc="lower right")
+
+        # ====================================================
+        # 下半部：價格
+        # ====================================================
         ax2 = fig.add_subplot(gs[2:, :], sharex=ax)
-        ax2.plot(
-            "trade_price",
-            data=self._trade_detail,
-            marker="",
-            label="open",
-            alpha=0.8,
-        )
-        ax2.plot(
-            "hold_cost",
-            data=self._trade_detail,
-            marker="",
-            label="hold_cost",
-            alpha=0.8,
-        )
-        # TODO: add signal plot
-        ax2.legend(loc=2)
+
+        ax2.plot(dates, df["trade_price"], label="trade_price", alpha=0.8)
+        ax2.plot(dates, df["hold_cost"], label="hold_cost", alpha=0.8)
+
         ax2.grid(grid)
-        if title is not None:
+        ax2.legend(loc="upper left")
+
+        # ----------------------------------------------------
+        # 3. x 軸日期格式化
+        # ----------------------------------------------------
+        ax2.set_xlabel("Date")
+
+        num_days = len(df)
+
+        if num_days <= 30:
+            ax2.xaxis.set_major_locator(mdates.DayLocator(interval=1))
+        elif num_days <= 120:
+            ax2.xaxis.set_major_locator(mdates.DayLocator(interval=3))
+        elif num_days <= 250:
+            ax2.xaxis.set_major_locator(mdates.WeekdayLocator())
+        else:
+            ax2.xaxis.set_major_locator(mdates.MonthLocator())
+
+        ax2.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
+        plt.setp(ax2.xaxis.get_majorticklabels(), rotation=45, ha="right")
+
+        # ----------------------------------------------------
+        # 4. 標題、輸出
+        # ----------------------------------------------------
+        if title:
             ax.set_title(title)
-        if x_label is not None:
-            ax.set_xlabel(x_label)
-        if y_label is not None:
-            ax.set_ylabel(y_label)
-        # plt.show()
+
         os.makedirs(os.path.dirname(output), exist_ok=True)
+        plt.tight_layout()
         plt.savefig(output)
+        plt.close(fig)
+
+        print(f"Plot saved to {output}")
