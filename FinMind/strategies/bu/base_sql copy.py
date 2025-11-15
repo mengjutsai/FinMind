@@ -581,12 +581,22 @@ class BackTest:
 
 
         self._trade_detail = pd.DataFrame(_trade_detail_dict_list)
+
         self._trade_detail["date"] = self.stock_price["date"]
-        self._trade_detail = self._trade_detail.drop(["fee", "tax"], axis=1)
-        self._trade_detail["EverytimeTotalProfit"] = (
-            self._trade_detail["trader_fund"]
-            + self._trade_detail["EverytimeProfit"]
-        )
+
+        # self._trade_detail = self._trade_detail.drop(["fee", "tax"], axis=1) # metsai - remove this for now
+        self._trade_detail = self._trade_detail.drop(columns=["fee","tax"], errors="ignore")
+
+        # self._trade_detail["EverytimeTotalProfit"] = (
+        #     self._trade_detail["trader_fund"]
+        #     + self._trade_detail["EverytimeProfit"]
+        # )
+
+        if not self._trade_detail.empty:
+            self._trade_detail["EverytimeTotalProfit"] = (
+                self._trade_detail["trader_fund"] + self._trade_detail["EverytimeProfit"]
+            )
+
 
         
         self.__compute_final_stats()
@@ -668,6 +678,52 @@ class BackTest:
 
 
 
+    # self to be deleted in the future
+    # def __compute_final_stats(self):
+    #     # ⚡ 用實際投入金額，而不是初始基金
+    #     invested_capital = max(1e-9, self.trader.total_invested)
+
+    #     self._final_stats["MeanProfit"] = np.mean(
+    #         self._trade_detail["EverytimeProfit"]
+    #     )
+    #     self._final_stats["MaxLoss"] = np.min(
+    #         self._trade_detail["EverytimeProfit"]
+    #     )
+    #     self._final_stats["FinalProfit"] = self._trade_detail[
+    #         "EverytimeProfit"
+    #     ].values[-1]
+
+    #     # ✅ 改成用投入資金算百分比
+    #     self._final_stats["MeanProfitPer"] = round(
+    #         self._final_stats["MeanProfit"] / invested_capital * 100, 2
+    #     )
+    #     self._final_stats["FinalProfitPer"] = round(
+    #         self._final_stats["FinalProfit"] / invested_capital * 100, 2
+    #     )
+    #     self._final_stats["MaxLossPer"] = round(
+    #         self._final_stats["MaxLoss"] / invested_capital * 100, 2
+    #     )
+    #     self._final_stats["AnnualReturnPer"] = round(
+    #         period_return2annual_return(
+    #             self._final_stats["FinalProfitPer"] / 100,
+    #             self._trade_period_years,
+    #         )
+    #         * 100,
+    #         2,
+    #     )
+
+    #     # ⚡ 每期報酬率 = ΔProfit / 投入金額
+    #     time_step_returns = (
+    #         self._trade_detail["EverytimeProfit"]
+    #         - self._trade_detail["EverytimeProfit"].shift(1)
+    #     ) / invested_capital
+
+    #     strategy_return = np.mean(time_step_returns)
+    #     strategy_std = np.std(time_step_returns)
+
+    #     self._final_stats["AnnualSharpRatio"] = calculate_sharp_ratio(
+    #         strategy_return, strategy_std
+    #     )
 
 
     # TODO:
@@ -757,6 +813,92 @@ class BackTest:
         )
         return self._compare_market_stats
 
+    # def plot(
+    #     self,
+    #     output: str = "default.png",
+    #     title: str = "Backtest Result",
+    #     x_label: str = "Time",
+    #     y_label: str = "Profit",
+    #     grid: bool = True        
+    # ):
+    #     try:
+    #         import matplotlib.gridspec as gridspec
+    #         import matplotlib.pyplot as plt
+    #         import matplotlib.dates as mdates
+    #     except ImportError:
+    #         raise ImportError("You must install matplotlib to plot importance")
+
+    #     fig = plt.figure(figsize=(12, 8))
+    #     gs = gridspec.GridSpec(4, 1, figure=fig)
+    #     ax = fig.add_subplot(gs[:2, :])
+
+    #     # === 過濾 price=0 的列 ===
+    #     df = self._trade_detail.copy()
+    #     if "trade_price" in df.columns:
+    #         df = df[df["trade_price"] > 0].copy()
+
+
+    #     # xpos = self._trade_detail.index
+    #     # print(self._trade_detail)
+    #     xpos = pd.to_datetime(self._trade_detail["date"])
+
+
+    #     ax.plot(
+    #         xpos, "UnrealizedProfit", data=self._trade_detail, marker="", alpha=0.8
+    #     )
+    #     ax.plot(xpos, "RealizedProfit", data=self._trade_detail, marker="", alpha=0.8)
+    #     ax.plot(
+    #         xpos, "EverytimeProfit", data=self._trade_detail, marker="", alpha=0.8
+    #     )
+    #     ax.grid(grid)
+
+    #     ax.legend(loc=2)
+    #     axx = ax.twinx()
+    #     axx.bar(
+    #         xpos,
+    #         self._trade_detail["hold_volume"] / 1000.0, #metsai
+    #         alpha=0.2,
+    #         label="hold_volume",
+    #         color="pink",
+    #     )
+    #     axx.legend(loc=3)
+    #     ax2 = fig.add_subplot(gs[2:, :], sharex=ax)
+    #     ax2.plot(
+    #         xpos,
+    #         "trade_price",
+    #         data=self._trade_detail,
+    #         marker="",
+    #         label="open",
+    #         alpha=0.8,
+    #     )
+    #     ax2.plot(
+    #         xpos,
+    #         "hold_cost",
+    #         data=self._trade_detail,
+    #         marker="",
+    #         label="hold_cost",
+    #         alpha=0.8,
+    #     )
+
+    #     ax2.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
+    #     ax2.xaxis.set_major_locator(mdates.DayLocator(interval=30))
+
+    #     fig.autofmt_xdate(rotation=90)
+
+    #     # TODO: add signal plot
+    #     ax2.legend(loc=2)
+    #     ax2.grid(grid)
+    #     if title is not None:
+    #         ax.set_title(title)
+    #     if x_label is not None:
+    #         ax.set_xlabel(x_label)
+    #     if y_label is not None:
+    #         ax.set_ylabel(y_label)
+    #     # plt.show()
+    #     # print(output)
+
+    #     os.makedirs(os.path.dirname(output), exist_ok=True)
+    #     plt.savefig(output)
 
 
     def plot(
@@ -770,55 +912,194 @@ class BackTest:
         try:
             import matplotlib.gridspec as gridspec
             import matplotlib.pyplot as plt
+            import matplotlib.dates as mdates
         except ImportError:
             raise ImportError("You must install matplotlib to plot importance")
+
+        # === 過濾 trade_price=0 的列 ===
+        df = self._trade_detail.copy()
+        if "trade_price" in df.columns:
+            df = df[df["trade_price"] > 0].copy()
+
+        xpos = pd.to_datetime(df["date"])
 
         fig = plt.figure(figsize=(12, 8))
         gs = gridspec.GridSpec(4, 1, figure=fig)
         ax = fig.add_subplot(gs[:2, :])
-        xpos = self._trade_detail.index
-        ax.plot(
-            "UnrealizedProfit", data=self._trade_detail, marker="", alpha=0.8
-        )
-        ax.plot("RealizedProfit", data=self._trade_detail, marker="", alpha=0.8)
-        ax.plot(
-            "EverytimeProfit", data=self._trade_detail, marker="", alpha=0.8
-        )
+
+        # === 損益 ===
+        if "UnrealizedProfit" in df.columns:
+            ax.plot(xpos, df["UnrealizedProfit"], label="UnrealizedProfit", alpha=0.8)
+        if "RealizedProfit" in df.columns:
+            ax.plot(xpos, df["RealizedProfit"], label="RealizedProfit", alpha=0.8)
+        if "EverytimeProfit" in df.columns:
+            ax.plot(xpos, df["EverytimeProfit"], label="EverytimeProfit", alpha=0.8)
         ax.grid(grid)
         ax.legend(loc=2)
+
+        # === 持倉量 ===
         axx = ax.twinx()
-        axx.bar(
-            xpos,
-            self._trade_detail["hold_volume"],
-            alpha=0.2,
-            label="hold_volume",
-            color="pink",
-        )
-        axx.legend(loc=3)
+        if "hold_volume" in df.columns:
+            axx.bar(
+                xpos,
+                df["hold_volume"] / 1000.0,
+                alpha=0.2,
+                label="hold_volume",
+                color="pink",
+            )
+            axx.legend(loc=3)
+
+        # === 價格與成本 ===
         ax2 = fig.add_subplot(gs[2:, :], sharex=ax)
-        ax2.plot(
-            "trade_price",
-            data=self._trade_detail,
-            marker="",
-            label="open",
-            alpha=0.8,
-        )
-        ax2.plot(
-            "hold_cost",
-            data=self._trade_detail,
-            marker="",
-            label="hold_cost",
-            alpha=0.8,
-        )
-        # TODO: add signal plot
+        if "trade_price" in df.columns:
+            ax2.plot(xpos, df["trade_price"], label="trade_price", alpha=0.8)
+        if "hold_cost" in df.columns:
+            ax2.plot(xpos, df["hold_cost"], label="hold_cost", alpha=0.8)
+
+        ax2.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
+        ax2.xaxis.set_major_locator(mdates.DayLocator(interval=30))
+        fig.autofmt_xdate(rotation=90)
         ax2.legend(loc=2)
         ax2.grid(grid)
+
         if title is not None:
             ax.set_title(title)
         if x_label is not None:
             ax.set_xlabel(x_label)
         if y_label is not None:
             ax.set_ylabel(y_label)
-        # plt.show()
+
         os.makedirs(os.path.dirname(output), exist_ok=True)
         plt.savefig(output)
+
+
+
+    # def plot(
+    #     self,
+    #     output: str = "default.png",
+    #     title: str = "Backtest Result",
+    #     x_label: str = "Time",
+    #     y_label: str = "Profit / Return",
+    #     grid: bool = True
+    # ):
+    #     import matplotlib.pyplot as plt
+    #     import matplotlib.dates as mdates
+    #     import matplotlib.gridspec as gridspec
+    #     import pandas as pd
+    #     import numpy as np
+    #     import os
+
+    #     df = self._trade_detail.copy()
+    #     df["date"] = pd.to_datetime(df["date"])
+
+    #     # === 過濾有效資料 ===
+    #     if "trade_price" in df.columns:
+    #         df = df[df["trade_price"] > 0].copy()
+    #     if "hold_cost" in df.columns:
+    #         df = df[df["hold_cost"] > 0].copy()
+    #     if df.empty:
+    #         print("⚠️ 無有效交易資料可繪圖")
+    #         return
+
+    #     xpos = df["date"]
+    #     fig = plt.figure(figsize=(12, 8))
+    #     gs = gridspec.GridSpec(5, 1, figure=fig, height_ratios=[2, 1, 1, 1, 1])
+    #     ax = fig.add_subplot(gs[0:2, :])
+
+    #     # === 損益 ===
+    #     if "EverytimeProfit" in df.columns:
+    #         ax.plot(xpos, df["EverytimeProfit"], label="EverytimeProfit", alpha=0.8)
+    #     if "RealizedProfit" in df.columns:
+    #         ax.plot(xpos, df["RealizedProfit"], label="RealizedProfit", alpha=0.8)
+    #     if "UnrealizedProfit" in df.columns:
+    #         ax.plot(xpos, df["UnrealizedProfit"], label="UnrealizedProfit", alpha=0.8)
+    #     ax.legend(loc="upper left")
+    #     ax.grid(grid)
+
+    #     # === 實際資金報酬率 (含手續費 / 稅 / 未實現損益) ===
+    #     ax_ret = fig.add_subplot(gs[2, :], sharex=ax)
+    #     fee_rate = 0.001425   # 手續費 0.1425%
+    #     tax_rate = 0.003      # 證交稅 0.3%
+
+    #     if all(c in df.columns for c in ["trade_price", "hold_volume", "hold_cost"]):
+    #         df = df.reset_index(drop=True)
+    #         fee_rate = 0.001425
+    #         tax_rate = 0.003
+
+    #         df["cash_flow"] = 0.0
+    #         prev_vol = 0
+
+    #         for i in range(len(df)):
+    #             price = df.at[i, "trade_price"]
+    #             vol = df.at[i, "hold_volume"]
+
+    #             if price <= 0 or vol is None:
+    #                 continue
+
+    #             # 買入 → 現金流出（負號）
+    #             if vol > prev_vol:
+    #                 buy_shares = vol - prev_vol
+    #                 df.at[i, "cash_flow"] = -buy_shares * price * (1 + fee_rate)
+
+    #             # 賣出 → 現金流入（正號）
+    #             elif vol < prev_vol:
+    #                 sell_shares = prev_vol - vol
+    #                 df.at[i, "cash_flow"] = sell_shares * price * (1 - fee_rate - tax_rate)
+
+    #             prev_vol = vol
+
+    #         # 累積現金
+    #         df["cash_balance"] = df["cash_flow"].cumsum()
+
+    #         # 現在持股市值
+    #         df["market_value"] = df["hold_volume"] * df["trade_price"]
+
+    #         # 累積投入資金（取負的 cash_flow 絕對值）
+    #         df["total_invest"] = df["cash_flow"].where(df["cash_flow"] < 0, 0).cumsum().abs()
+
+    #         # 總資產 = 現金 + 市值
+    #         df["total_equity"] = df["cash_balance"] + df["market_value"]
+
+    #         # 真實報酬率（避免除以零）
+    #         df["capital_return"] = np.where(
+    #             df["total_invest"] > 1e-6,
+    #             (df["total_equity"] / df["total_invest"] - 1) * 100,
+    #             0
+    #         )
+
+    #         ax_ret.plot(df["date"], df["capital_return"], color="red", label="Capital Return (%)", alpha=0.8)
+    #         ax_ret.axhline(0, color="gray", linestyle="--", lw=0.8)
+    #         ax_ret.legend(loc="upper left")
+    #         ax_ret.set_ylabel("Capital Return (%)")
+    #         ax_ret.grid(grid)
+
+    #     else:
+    #         print("⚠️ 缺少必要欄位 trade_price / hold_volume / hold_cost")
+
+    #     # === 持倉量 ===
+    #     ax_vol = fig.add_subplot(gs[3, :], sharex=ax)
+    #     if "hold_volume" in df.columns:
+    #         ax_vol.bar(xpos, df["hold_volume"] / 1000.0, alpha=0.3, color="pink", label="Hold Volume (k)")
+    #         ax_vol.legend(loc="upper left")
+    #         ax_vol.grid(grid)
+
+    #     # === 價格與成本 ===
+    #     ax_price = fig.add_subplot(gs[4, :], sharex=ax)
+    #     if "trade_price" in df.columns:
+    #         ax_price.plot(xpos, df["trade_price"], label="Trade Price", alpha=0.8)
+    #     if "hold_cost" in df.columns:
+    #         ax_price.plot(xpos, df["hold_cost"], label="Hold Cost", alpha=0.8)
+    #     ax_price.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
+    #     ax_price.xaxis.set_major_locator(mdates.DayLocator(interval=30))
+    #     ax_price.legend(loc="upper left")
+    #     ax_price.grid(grid)
+
+    #     fig.autofmt_xdate(rotation=90)
+    #     ax.set_title(title)
+    #     ax.set_xlabel(x_label)
+    #     ax.set_ylabel(y_label)
+
+    #     os.makedirs(os.path.dirname(output), exist_ok=True)
+    #     plt.tight_layout()
+    #     plt.savefig(output, dpi=200)
+    #     print(f"📈 Saved plot: {output}")
