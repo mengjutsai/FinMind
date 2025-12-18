@@ -251,14 +251,8 @@ class BackTest:
         self._compare_market_stats = pd.Series()
         # self.outputname = outputname
         
-    def add_strategy(self, strategy_cls, **kwargs):
-        """
-        strategy_cls : 策略 class，例如 Alpha_v4、Bias、MA 之類
-        kwargs       : 要傳給策略的自訂參數（use_tf, pattern_w, volume_w ...）
-        """
-        self.strategy_cls = strategy_cls
-        self.strategy_kwargs = kwargs
-
+    def add_strategy(self, strategy: Strategy):
+        self.strategy = strategy
 
     def _add_indicators_formula(
         self,
@@ -538,34 +532,24 @@ class BackTest:
             self.stock_price["CashEarningsDistribution"] = 0
 
     def simulate(self):
-
-        if hasattr(self, "strategy_cls"):
-            # 組策略初始化必要參數
-            init_kwargs = dict(
-                trader=self.trader,
-                stock_id=self.stock_id,
-                start_date=self.start_date,
-                end_date=self.end_date,
-                data_loader=self.data_loader,
+        if self.strategy:
+            strategy = self.strategy(
+                self.trader,
+                self.stock_id,
+                self.start_date,
+                self.end_date,
+                self.data_loader,
             )
-            # 把外部 add_strategy 時給的參數合併進去
-            init_kwargs.update(self.strategy_kwargs)
-
-            # 實例化新 Strategy
-            strategy = self.strategy_cls(**init_kwargs)
-
-            # 執行策略
             strategy.load_strategy_data()
             self.stock_price = strategy.create_trade_sign(
-                stock_price=self.stock_price,
-                additional_dataset_obj=self
+                stock_price=self.stock_price, additional_dataset_obj=self
             )
 
+            assert (
+                "signal" in self.stock_price.columns
+            ), "Must be create signal columns in stock_price"
         else:
-            # fallback：原本 FinMind 的內建買賣 rule 模式
             self._create_trade_sign()
-
-
         if not self.stock_price.index.is_monotonic_increasing:
             warnings.warn(
                 "data index is not sorted in ascending order. Sorting.",
@@ -864,7 +848,7 @@ class BackTest:
         y_label: str = "Profit",
         grid: bool = True        
     ):
-        # print("plotting backtest result...")
+        print("plotting backtest result...")
 
         import os
         import numpy as np
@@ -894,13 +878,8 @@ class BackTest:
             print("⚠️ plot() 沒有有效的交易日資料可畫圖。")
             return
 
-        # dates = df["date"].tolist()
+        dates = df["date"].tolist()
   
-        # === 建立無假日 X 軸 ===
-        df["date_str"] = df["date"].dt.strftime("%Y-%m-%d")
-        x = np.arange(len(df))                 # 用 index 當 X 軸（無假日 gap）
-        dates = df["date_str"].tolist()        # tick label 用真實日期
-
         # ----------------------------------------------------
         # 2. True ReturnPct (%): 以「歷史總投入資金」為基準
         # ----------------------------------------------------
@@ -949,9 +928,9 @@ class BackTest:
         # ====================================================
         ax = fig.add_subplot(gs[:2, :])
 
-        ax.plot(x, df["UnrealizedProfit"], alpha=0.8, label="UnrealizedProfit")
-        ax.plot(x, df["RealizedProfit"], alpha=0.8, label="RealizedProfit")
-        ax.plot(x, df["EverytimeProfit"], alpha=0.8, label="EverytimeProfit")
+        ax.plot(dates, df["UnrealizedProfit"], alpha=0.8, label="UnrealizedProfit")
+        ax.plot(dates, df["RealizedProfit"], alpha=0.8, label="RealizedProfit")
+        ax.plot(dates, df["EverytimeProfit"], alpha=0.8, label="EverytimeProfit")
 
         ax.grid(grid)
         ax.legend(loc="upper left")
@@ -983,8 +962,8 @@ class BackTest:
         # ====================================================
         ax2 = fig.add_subplot(gs[2:, :], sharex=ax)
 
-        ax2.plot(x, df["trade_price"], label="trade_price", alpha=0.8)
-        ax2.plot(x, df["hold_cost"], label="hold_cost", alpha=0.8)
+        ax2.plot(dates, df["trade_price"], label="trade_price", alpha=0.8)
+        ax2.plot(dates, df["hold_cost"], label="hold_cost", alpha=0.8)
 
         ax2.grid(grid)
         ax2.legend(loc="upper left")
@@ -996,14 +975,14 @@ class BackTest:
 
         num_days = len(df)
 
-        # if num_days <= 30:
-        #     ax2.xaxis.set_major_locator(mdates.DayLocator(interval=1))
-        # elif num_days <= 120:
-        #     ax2.xaxis.set_major_locator(mdates.DayLocator(interval=3))
-        # elif num_days <= 250:
-        #     ax2.xaxis.set_major_locator(mdates.WeekdayLocator())
-        # else:
-        #     ax2.xaxis.set_major_locator(mdates.MonthLocator())
+        if num_days <= 30:
+            ax2.xaxis.set_major_locator(mdates.DayLocator(interval=1))
+        elif num_days <= 120:
+            ax2.xaxis.set_major_locator(mdates.DayLocator(interval=3))
+        elif num_days <= 250:
+            ax2.xaxis.set_major_locator(mdates.WeekdayLocator())
+        else:
+            ax2.xaxis.set_major_locator(mdates.MonthLocator())
 
         ax2.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
         plt.setp(ax2.xaxis.get_majorticklabels(), rotation=45, ha="right")
@@ -1015,20 +994,8 @@ class BackTest:
             ax.set_title(title)
 
         os.makedirs(os.path.dirname(output), exist_ok=True)
-
-        # === 自訂 X 軸刻度：保留日期、無假日 gap ===
-        N = max(1, len(df) // 20)  # 控制顯示的 tick 數量（避免太擠）
-
-        ax2.set_xticks(np.arange(0, len(df), N))
-        ax2.set_xticklabels(dates[0:len(df):N], rotation=45, ha="right")
-
-        # 上半部 ax 同步 Ticks
-        ax.set_xticks(np.arange(0, len(df), N))
-        ax.set_xticklabels(dates[0:len(df):N], rotation=45, ha="right")
-
-
         plt.tight_layout()
         plt.savefig(output)
         plt.close(fig)
 
-        # print(f"Plot saved to {output}")
+        print(f"Plot saved to {output}")

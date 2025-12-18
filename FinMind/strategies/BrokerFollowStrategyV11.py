@@ -12,7 +12,7 @@ class BrokerFollowStrategyV11(Strategy):
     stop_loss: float = 0.10          # 強制停損 10%
     trailing_stop: float = 0.05      # 移動停利 5%
     take_profit: float = 0.08        # 停利 8%
-    db_file: str = "stock.db"
+    db_file: str = "/Users/meng-jutsai/Stock/FiveB/stock.db"
 
     def create_trade_sign(self, stock_price: pd.DataFrame, **kwargs) -> pd.DataFrame:
         stock_price = stock_price.drop(columns=["fee","tax"], errors="ignore")

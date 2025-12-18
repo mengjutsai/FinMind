@@ -43,13 +43,16 @@ class Alpha_v4(Strategy):
 
     # ----------------------------------------------------------
     def __init__(self, *args, **kwargs):
-        self.use_tf = kwargs.get("use_tf", ["D", "W", "M"])
+
+        self.use_tf = kwargs.pop("use_tf", ["D", "W", "M"])
+        self.pattern_weight = kwargs.pop("pattern_weight", 1.0)
+        self.volume_weight  = kwargs.pop("volume_weight", 1.0)
+        self.tf_weight      = kwargs.pop("tf_weight", self.default_tf_weight)
+        # self.shared_seg_dir = kwargs.pop("shared_seg_dir", None)
+        # self.custom_base_dir = kwargs.pop("base_dir", None)
 
         # 僅啟用使用者指定的 TF
         self.freq_modes = self.use_tf
-
-        # Multi-TF 權重：自動過濾
-        self.tf_weight = {tf: self.default_tf_weight.get(tf, 1.0) for tf in self.freq_modes}
 
         super().__init__(*args, **kwargs)
 
@@ -69,7 +72,7 @@ class Alpha_v4(Strategy):
 
         base_dir = kwargs.get(
             "base_dir",
-            "/Users/meng-jutsai/Stock/FiveB/results/backtest/alpha_v4"
+            "/Users/meng-jutsai/Stock/FiveB/results/backtest/Alpha_v4"
         )
 
         self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -218,6 +221,11 @@ class Alpha_v4(Strategy):
 
         dfs = []
         for tf in self.freq_modes:
+            # path = os.path.join(
+            #     self.shared_seg_dir if self.shared_seg_dir else self.seg_output_dir,
+            #     f"seg_results_{tf}.csv"
+            # )
+
             path = os.path.join(self.seg_output_dir, f"seg_results_{tf}.csv")
             if not os.path.exists(path):
                 continue
@@ -267,11 +275,12 @@ class Alpha_v4(Strategy):
 
         # 檢查啟用的 timeframe 有沒有對應的 seg_results_{TF}.csv
         need_predict = False
+
         for tf in self.freq_modes:
             tf_csv = os.path.join(self.seg_output_dir, f"seg_results_{tf}.csv")
+
             if not os.path.exists(tf_csv):
-                need_predict = True
-                break
+                    need_predict = True
 
         if need_predict:
             print(">>> Multi-TF CSVs not found. Start batch plot + predict...")
@@ -410,11 +419,29 @@ class Alpha_v4(Strategy):
                 # Multi-TF 加權強度（共振）
                 # Σ (TF weight × Pattern Score)
                 # --------------------------------------------------
+                # (1) TF 共振加權
+
                 df_today_long["TF_W"] = df_today_long["TF"].map(self.tf_weight)
-                df_today_long["WT"] = df_today_long["TF_W"] * df_today_long["Pattern_Score"]
+
+                # 單一 Pattern Score（只乘一次）
+                df_today_long["ps"] = df_today_long["Pattern_Score"]
+
+                # Final pattern strength = PatternScore × TF Weight × Human weight
+                df_today_long["wt_pattern"] = df_today_long["ps"] * df_today_long["TF_W"] * self.pattern_weight
+
+                # Volume factor
+                vol_factor = 1.0
+                if self._check_volume_momentum(sp, i):
+                    vol_factor = 1.0 + self.volume_weight
+
+                df_today_long["wt_volume"] = vol_factor
+
+                # Final Weight（完全不平方）
+                df_today_long["WT"] = df_today_long["wt_pattern"] * df_today_long["wt_volume"]
 
                 mtf_strength = df_today_long["WT"].sum()
 
+                
                 # 基本 1 單位 + 強度額外加碼
                 add_units = 1 + int(mtf_strength)
                 add_units = min(add_units, self.max_add)
