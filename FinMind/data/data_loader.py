@@ -8,7 +8,7 @@ from FinMind.schema.data import Dataset
 
 class DataLoader(FinMindApi):
     def __init__(self, token: str = ""):
-        super(DataLoader, self).__init__()
+        super(DataLoader, self).__init__(token=token)
         self.login_by_token(api_token=token)
         self.feature = Feature(self)
 
@@ -71,6 +71,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 台灣股價資料表
         :param stock_id (str): 股票代號("2330")
@@ -97,11 +99,19 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return stock_price
 
     def taiwan_stock_daily_adj(
-        self, stock_id: str, start_date: str, end_date: str, timeout: int = None
+        self,
+        stock_id: str,
+        start_date: str,
+        end_date: str,
+        timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 還原股價, 主要採用向前還原
         :param stock_id (str):stock_id: 股票代號("2330")
@@ -128,6 +138,8 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return stock_price
 
@@ -151,6 +163,9 @@ class DataLoader(FinMindApi):
         :rtype column deal_price (float)
         :rtype column volume (int)
         """
+        if not stock_id and not stock_id_list:
+            stock_id_list = self._get_stock_id_list(date, timeout)
+
         stock_tick = self.get_data(
             dataset=Dataset.TaiwanStockPriceTick,
             data_id=stock_id,
@@ -167,6 +182,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 個股 PER、PBR 資料
         :param stock_id (str): 股票代號("2330")
@@ -188,6 +205,8 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return stock_per_pbr
 
@@ -240,6 +259,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 當日沖銷交易標的及成交量值
         :param stock_id (str): 股票代號("2330")
@@ -262,6 +283,8 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return stock_day_trading
 
@@ -299,6 +322,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 個股融資融劵表
         :param stock_id (str): 股票代號("2330")
@@ -331,6 +356,8 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return stock_margin
 
@@ -366,6 +393,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 個股三大法人買賣表
         :param stock_id (str): 股票代號("2330")
@@ -387,6 +416,8 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return stock_institutional_investors
 
@@ -419,6 +450,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 外資持股表
         :param stock_id (str): 股票代號("2330")
@@ -448,6 +481,8 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return stock_shareholding
 
@@ -457,6 +492,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 股權持股分級表
         :param stock_id (str): 股票代號("2330")
@@ -479,6 +516,8 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return stock_shareholding_class
 
@@ -488,6 +527,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 借券成交明細
         :param stock_id (str): 股票代號("2330")
@@ -512,6 +553,8 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return stock_securities_lending
 
@@ -521,6 +564,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 借券成交明細
         :param stock_id (str): 股票代號("2330")
@@ -552,6 +597,8 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return short_sale_balances
 
@@ -561,6 +608,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 現金流量表
         :param stock_id (str): 股票代號("2330")
@@ -584,6 +633,8 @@ class DataLoader(FinMindApi):
                 str(pd.Period(end_date).asfreq("D", "end")) if end_date else ""
             ),
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return stock_cash_flows_statement
 
@@ -593,6 +644,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 綜合損益表
         :param stock_id (str): 股票代號("2330")
@@ -616,6 +669,8 @@ class DataLoader(FinMindApi):
                 str(pd.Period(end_date).asfreq("D", "end")) if end_date else ""
             ),
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return stock_financial_statement
 
@@ -625,6 +680,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 資產負債表
         :param stock_id (str): 股票代號("2330")
@@ -648,6 +705,8 @@ class DataLoader(FinMindApi):
                 str(pd.Period(end_date).asfreq("D", "end")) if end_date else ""
             ),
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return stock_balance_sheet
 
@@ -657,6 +716,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """股利政策表
         :param stock_id (str): 股票代號("2330")
@@ -695,6 +756,8 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return stock_dividend
 
@@ -704,6 +767,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 除權除息結果表
         :param stock_id (str): 股票代號("2330")
@@ -730,6 +795,8 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return stock_dividend_result
 
@@ -739,6 +806,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 月營收表
         Since the revenue in January,
@@ -776,6 +845,8 @@ class DataLoader(FinMindApi):
                 else ""
             ),
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return stock_month_revenue
 
@@ -785,6 +856,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 台股市值比重表
         :param stock_id (str): 股票代號("2330")
@@ -807,6 +880,8 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return stock_market_value_weight
 
@@ -870,6 +945,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        futures_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 期貨日成交資訊
         :param futures_id: 期貨代號("TX")
@@ -899,6 +976,8 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=futures_id_list,
         )
         return futures_daily
 
@@ -908,6 +987,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        option_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 選擇權日成交資訊
         :param option_id: 選擇權代號("TXO")
@@ -937,6 +1018,8 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=option_id_list,
         )
         return option_daily
 
@@ -946,6 +1029,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        futures_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 期貨大額交易人未沖銷部位
         :param futures_id: 期貨代號("TJF")
@@ -983,6 +1068,8 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=futures_id_list,
         )
         return futures_open_interest_large_traders
 
@@ -992,6 +1079,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        option_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 選擇權大額交易人未沖銷部位
         :param option_id: 期貨代號("CA")
@@ -1029,6 +1118,8 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=option_id_list,
         )
         return option_open_interest_large_traders
 
@@ -1057,7 +1148,12 @@ class DataLoader(FinMindApi):
         return futures_tick
 
     def taiwan_option_tick(
-        self, option_id: str, date: str, timeout: int = None
+        self,
+        option_id: str,
+        date: str,
+        timeout: int = None,
+        use_async: bool = False,
+        option_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 選擇權交易明細表, 資料量超過10萬筆, 需等一段時間
         :param option_id: 選擇權代號("TXO")
@@ -1079,18 +1175,22 @@ class DataLoader(FinMindApi):
             data_id=option_id,
             start_date=date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=option_id_list,
         )
         return option_tick
 
     def taiwan_futures_institutional_investors(
         self,
-        data_id: str = "",
+        futures_id: str = "",
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        futures_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 期貨三大法人買賣
-        :param data_id: 期貨代號("TX")
+        :param futures_id: 期貨代號("TX")
         :param start_date (str): 起始日期("2018-01-01")
         :param end_date (str): 結束日期("2021-03-06")
         :param timeout (int): timeout seconds, default None
@@ -1111,22 +1211,26 @@ class DataLoader(FinMindApi):
         """
         futures_institutional_investors = self.get_data(
             dataset=Dataset.TaiwanFuturesInstitutionalInvestors,
-            data_id=data_id,
+            data_id=futures_id,
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=futures_id_list,
         )
         return futures_institutional_investors
 
     def taiwan_option_institutional_investors(
         self,
-        data_id: str = "",
+        option_id: str = "",
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        option_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 選擇權三大法人買賣
-        :param data_id: 選擇權代號("TXO")
+        :param option_id: 選擇權代號("TXO")
         :param start_date (str): 起始日期("2018-01-01")
         :param end_date (str): 結束日期("2021-03-06")
         :param timeout (int): timeout seconds, default None
@@ -1147,22 +1251,26 @@ class DataLoader(FinMindApi):
         """
         option_institutional_investors = self.get_data(
             dataset=Dataset.TaiwanOptionInstitutionalInvestors,
-            data_id=data_id,
+            data_id=option_id,
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=option_id_list,
         )
         return option_institutional_investors
 
     def taiwan_futures_institutional_investors_after_hours(
         self,
-        data_id: str = "",
+        futures_id: str = "",
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        futures_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 期貨夜盤三大法人買賣
-        :param data_id: 期貨代號("TX")
+        :param futures_id: 期貨代號("TX")
         :param start_date (str): 起始日期("2021-10-12")
         :param end_date (str): 結束日期("2023-11-12")
         :param timeout (int): timeout seconds, default None
@@ -1179,22 +1287,26 @@ class DataLoader(FinMindApi):
         """
         futures_institutional_investors_after_hours = self.get_data(
             dataset=Dataset.TaiwanFuturesInstitutionalInvestorsAfterHours,
-            data_id=data_id,
+            data_id=futures_id,
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=futures_id_list,
         )
         return futures_institutional_investors_after_hours
 
     def taiwan_option_institutional_investors_after_hours(
         self,
-        data_id: str = "",
+        option_id: str = "",
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        option_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 選擇權夜盤三大法人買賣
-        :param data_id: 選擇權代號("TXO")
+        :param option_id: 選擇權代號("TXO")
         :param start_date (str): 起始日期("2021-10-12")
         :param end_date (str): 結束日期("2023-11-12")
         :param timeout (int): timeout seconds, default None
@@ -1211,10 +1323,12 @@ class DataLoader(FinMindApi):
         """
         option_institutional_investors_after_hours = self.get_data(
             dataset=Dataset.TaiwanOptionInstitutionalInvestorsAfterHours,
-            data_id=data_id,
+            data_id=option_id,
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=option_id_list,
         )
         return option_institutional_investors_after_hours
 
@@ -1224,6 +1338,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        futures_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 期貨各卷商每日交易
         :param futures_id: 期貨代號("TX")
@@ -1246,6 +1362,8 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=futures_id_list,
         )
         return futures_dealer_trading_volume_daily
 
@@ -1255,6 +1373,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        option_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 選擇權各卷商每日交易
         :param option_id: 選擇權代號("TXO")
@@ -1277,6 +1397,8 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=option_id_list,
         )
         return option_dealer_trading_volume_daily
 
@@ -1354,6 +1476,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 減資恢復買賣參考價格
         :param stock_id (str): 股票代號("2330")
@@ -1381,6 +1505,8 @@ class DataLoader(FinMindApi):
                 str(pd.Period(end_date).asfreq("D", "end")) if end_date else ""
             ),
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return taiwan_stock_capital_reduction_reference_price
 
@@ -1390,6 +1516,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 台灣個股市值
         :param timeout (int): timeout seconds, default None
@@ -1406,6 +1534,8 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return tw_stock_market_value
 
@@ -1415,6 +1545,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 台灣個股10年平均收盤價
         :param timeout (int): timeout seconds, default None
@@ -1431,6 +1563,8 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return tw_stock_10year
 
@@ -1440,6 +1574,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 台股週 K 資料表
         :param timeout (int): timeout seconds, default None
@@ -1464,6 +1600,8 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return tw_stock_weekly
 
@@ -1473,6 +1611,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 台股月 K 資料表
         :param timeout (int): timeout seconds, default None
@@ -1497,37 +1637,10 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return tw_stock_monthly
-
-    # deprecated
-    def taiwan_stock_bar(
-        self,
-        stock_id: str = "",
-        date: str = "",
-        timeout: int = None,
-    ) -> pd.DataFrame:
-        """get 台股分 K 資料表 (deprecated)
-        :param timeout (int): timeout seconds, default None
-
-        :return: 台股分 K 資料表 TaiwanStockKBar
-        :rtype pd.DataFrame
-        :rtype column date (str)
-        :rtype column minute (str)
-        :rtype column stock_id (str)
-        :rtype column open (float)
-        :rtype column high (float)
-        :rtype column low (float)
-        :rtype column close (float)
-        :rtype column volume (int)
-        """
-        taiwan_stock_bar = self.get_data(
-            dataset=Dataset.TaiwanStockKBar,
-            data_id=stock_id,
-            start_date=date,
-            timeout=timeout,
-        )
-        return taiwan_stock_bar
 
     def taiwan_stock_kbar(
         self,
@@ -1567,6 +1680,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 台股個股下市下櫃表
         :param timeout (int): timeout seconds, default None
@@ -1583,6 +1698,8 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return taiwan_stock_delisting
 
@@ -1935,6 +2052,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 暫停融券賣出表(融券回補日)
         :param stock_id (str): 股票代號("2330")
@@ -1955,6 +2074,8 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return df
 
@@ -1963,7 +2084,7 @@ class DataLoader(FinMindApi):
         stock_id: str = "",
         securities_trader_id: str = "",
         stock_id_list: typing.List[str] = None,
-        # securities_trader_id_list: typing.List[str] = None,
+        securities_trader_id_list: typing.List[str] = None,
         date: str = "",
         timeout: int = None,
         use_async: bool = False,
@@ -1984,12 +2105,15 @@ class DataLoader(FinMindApi):
         :rtype column stock_id (str)
         :rtype column date (str)
         """
+        if not stock_id and not stock_id_list:
+            stock_id_list = self._get_stock_id_list(date, timeout)
+
         stock_trading_daily_report = self.get_data(
             dataset=Dataset.TaiwanStockTradingDailyReport,
             data_id=stock_id,
             securities_trader_id=securities_trader_id,
             data_id_list=stock_id_list,
-            # securities_trader_id_list=securities_trader_id_list,
+            securities_trader_id_list=securities_trader_id_list,
             start_date=date,
             end_date=date,
             timeout=timeout,
@@ -2109,6 +2233,8 @@ class DataLoader(FinMindApi):
         start_date: str = "",
         end_date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        stock_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 公布處置有價證券表
         :param stock_id (str): 股票代號("2330")
@@ -2133,6 +2259,8 @@ class DataLoader(FinMindApi):
             start_date=start_date,
             end_date=end_date,
             timeout=timeout,
+            use_async=use_async,
+            data_id_list=stock_id_list,
         )
         return stock_disposition_securities_period
 
@@ -2188,6 +2316,8 @@ class DataLoader(FinMindApi):
         data_id: str = "",
         date: str = "",
         timeout: int = None,
+        use_async: bool = False,
+        data_id_list: typing.List[str] = None,
     ) -> pd.DataFrame:
         """get 每5秒指數統計
         :param data_id (str): 產業代號("Automobile")
@@ -2206,6 +2336,8 @@ class DataLoader(FinMindApi):
             data_id=data_id,
             timeout=timeout,
             start_date=date,
+            use_async=use_async,
+            data_id_list=data_id_list,
         )
         return taiwan_stock_every5seconds_index
 
@@ -2236,16 +2368,16 @@ class DataLoader(FinMindApi):
         self,
         start_date: str = "",
         end_date: str = "",
-        data_id: str = "",
+        stock_id: str = "",
         timeout: int = None,
     ) -> pd.DataFrame:
-        """get 台股分割後參考價
+        """get 台股權證標的對照表
         :param start_date (str): 日期("2025-01-01")
         :param end_date (str): 日期("2026-02-01")
-        :param data_id (str): 權證代號("2330")
+        :param stock_id (str): 權證代號("2330")
         :param timeout (int): timeout seconds, default None
 
-        :return: 台股分割後參考價 TaiwanStockInfoWithWarrantSummary
+        :return: 台股權證標的對照表 TaiwanStockInfoWithWarrantSummary
         :rtype pd.DataFrame
         :rtype column stock_id (str)
         :rtype column date (str)
@@ -2262,7 +2394,7 @@ class DataLoader(FinMindApi):
         """
         taiwan_stock_info_with_warrant_summary = self.get_data(
             dataset=Dataset.TaiwanStockInfoWithWarrantSummary,
-            data_id=data_id,
+            data_id=stock_id,
             timeout=timeout,
             start_date=start_date,
             end_date=end_date,
@@ -2328,6 +2460,36 @@ class DataLoader(FinMindApi):
             end_date=end_date,
         )
         return taiwan_stock_par_value_change
+
+    def _get_stock_id_list(
+        self, date: str, timeout: int = None
+    ) -> typing.List[str]:
+        """A helper function that returns all stock IDs with volume > 0 for specific date.
+        :param date (str): 日期("2025-01-01")
+        :param timeout (int): timeout seconds, default None
+
+        :return: list[str]
+        """
+        stock_info = self.taiwan_stock_info(timeout=timeout)
+        type_mask = stock_info["type"].isin(["twse", "tpex"])
+        industry_category_mask = stock_info["industry_category"].isin(
+            ["大盤", "Index", "所有證券"]
+        )
+        stock_id_mask = stock_info["stock_id"].isin(["TAIEX", "TPEx"])
+        stock_info = stock_info[
+            type_mask & (~industry_category_mask) & (~stock_id_mask)
+        ]
+        taiwan_stock_price_df = self.taiwan_stock_daily(start_date=date)
+        taiwan_stock_price_df = taiwan_stock_price_df[
+            ["stock_id", "Trading_Volume"]
+        ]
+        taiwan_stock_price_df = taiwan_stock_price_df[
+            taiwan_stock_price_df["Trading_Volume"] > 0
+        ]
+        stock_info = stock_info.merge(
+            taiwan_stock_price_df, how="inner", on=["stock_id"]
+        )
+        return stock_info["stock_id"].unique().tolist()
 
 
 class Feature:

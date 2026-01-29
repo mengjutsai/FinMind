@@ -7,15 +7,12 @@ from loguru import logger
 
 from FinMind.data import DataLoader, FinMindApi
 
-FINMIND_USER = os.environ.get("FINMIND_USER", "")
-FINMIND_PASSWORD = os.environ.get("FINMIND_PASSWORD", "")
 FINMIND_API_TOKEN = os.environ.get("FINMIND_API_TOKEN", "")
 
 
 @pytest.fixture(scope="module")
 def api():
-    api = FinMindApi()
-    api.login_by_token(api_token=FINMIND_API_TOKEN)
+    api = FinMindApi(token=FINMIND_API_TOKEN)
     return api
 
 
@@ -121,14 +118,13 @@ def test_translation(api):
 
 @pytest.fixture(scope="module")
 def data_loader():
-    data_loader = DataLoader()
-    data_loader.login_by_token(api_token=FINMIND_API_TOKEN)
+    data_loader = DataLoader(token=FINMIND_API_TOKEN)
     return data_loader
 
 
-def test_api_login():
+def test_api_login_by_token():
     api = FinMindApi()
-    assert api.login(user_id=FINMIND_USER, password=FINMIND_PASSWORD)
+    assert api.login_by_token(api_token=FINMIND_API_TOKEN)
 
 
 def assert_data(data: pd.DataFrame, correct_columns_name: list):
@@ -547,7 +543,7 @@ def test_taiwan_stock_market_value_weight(data_loader):
 
 def test_taiwan_option_institutional_investors(data_loader):
     data = data_loader.taiwan_option_institutional_investors(
-        data_id="TXO", start_date="2019-04-03", end_date="2019-04-04"
+        option_id="TXO", start_date="2019-04-03", end_date="2019-04-04"
     )
     assert_data(
         data,
@@ -570,7 +566,7 @@ def test_taiwan_option_institutional_investors(data_loader):
 
 def test_taiwan_futures_institutional_investors(data_loader):
     data = data_loader.taiwan_futures_institutional_investors(
-        data_id="TX", start_date="2019-04-03", end_date="2019-04-04"
+        futures_id="TX", start_date="2019-04-03", end_date="2019-04-04"
     )
     assert_data(
         data,
@@ -592,7 +588,7 @@ def test_taiwan_futures_institutional_investors(data_loader):
 
 def test_taiwan_option_institutional_investors_after_hours(data_loader):
     data = data_loader.taiwan_option_institutional_investors_after_hours(
-        data_id="TXO", start_date="2021-10-12", end_date="2021-11-12"
+        option_id="TXO", start_date="2021-10-12", end_date="2021-11-12"
     )
     assert_data(
         data,
@@ -611,7 +607,7 @@ def test_taiwan_option_institutional_investors_after_hours(data_loader):
 
 def test_taiwan_futures_institutional_investors_after_hours(data_loader):
     data = data_loader.taiwan_futures_institutional_investors_after_hours(
-        data_id="TX", start_date="2021-10-12", end_date="2021-11-12"
+        futures_id="TX", start_date="2021-10-12", end_date="2021-11-12"
     )
     assert_data(
         data,
@@ -715,23 +711,6 @@ def test_taiwan_stock_monthly(data_loader):
             "close",
             "open",
             "spread",
-        ],
-    )
-
-
-def test_taiwan_stock_bar(data_loader):
-    data = data_loader.taiwan_stock_bar(stock_id="2330", date="2023-01-05")
-    assert_data(
-        data,
-        [
-            "date",
-            "minute",
-            "stock_id",
-            "open",
-            "high",
-            "low",
-            "close",
-            "volume",
         ],
     )
 
@@ -1053,6 +1032,26 @@ def test_taiwan_stock_trading_daily_report(data_loader):
     )
 
 
+def test_taiwan_stock_trading_daily_report_use_async(data_loader):
+    df = data_loader.taiwan_stock_trading_daily_report(
+        securities_trader_id="1020",
+        date="2024-07-30",
+        use_async=True,
+    )
+    assert_data(
+        df,
+        [
+            "securities_trader",
+            "price",
+            "buy",
+            "sell",
+            "securities_trader_id",
+            "stock_id",
+            "date",
+        ],
+    )
+
+
 def test_taiwan_stock_warrant_trading_daily_report(data_loader):
     df = data_loader.taiwan_stock_warrant_trading_daily_report(
         securities_trader_id="1020",
@@ -1096,8 +1095,8 @@ def test_taiwan_stock_trading_daily_report_async(data_loader):
     )
     stock_info = stock_info[
         ~stock_info["stock_id"].isin(taiwan_stock_price_df)
-    ].head(5)
-    stock_id_list = list(set(stock_info["stock_id"].values))[:5]
+    ].head(100)
+    stock_id_list = list(set(stock_info["stock_id"].values))[:100]
     logger.info(f"len: {len(stock_id_list)}")  # 2176
     start = datetime.datetime.now()
     df = data_loader.taiwan_stock_trading_daily_report(
@@ -1263,6 +1262,7 @@ def test_taiwan_stock_every5seconds_index(data_loader):
             "time",
             "stock_id",
             "price",
+            "kind",
         ],
     )
 
@@ -1338,3 +1338,10 @@ def test_taiwan_stock_par_value_change(data_loader):
             "after_ref_open",
         ],
     )
+
+
+def test_get_stock_id_list(data_loader):
+    stock_id_list = data_loader._get_stock_id_list(
+        date="2025-12-08",
+    )
+    assert len(stock_id_list) < 3000
