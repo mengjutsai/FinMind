@@ -1756,6 +1756,7 @@ class DataLoader:
         :rtype column deal_price (float)
         :rtype column volume (int)
         """
+        
         stock_tick = self.get_data(
             dataset=Dataset.TaiwanStockPriceTick,
             data_id=stock_id,
