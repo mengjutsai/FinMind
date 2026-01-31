@@ -172,6 +172,8 @@ class FinMindApi:
                 params=params,
                 timeout=timeout,
             ).json()
+            # print("RAW RESPONSE =", response)
+
             return pd.DataFrame(response["data"])
 
     def _get_data_with_async(
@@ -187,7 +189,7 @@ class FinMindApi:
         :param params: finmind api參數
         :return:
         """
-        logger.info(f"download {dataset}, data_id: {data_id_list}")
+        # logger.info(f"download {dataset}, data_id: {data_id_list}")
         params_list = [
             self._compatible_endpoints_param(
                 self._compatible_api_version(
